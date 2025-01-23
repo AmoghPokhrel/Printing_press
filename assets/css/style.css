@@ -1,0 +1,129 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    display: flex;
+    min-height: 100vh;
+    background-color: #f5f5f5;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 250px;
+    background-color: #d32f2f;
+    color: rgb(65, 65, 65);
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+}
+
+.sidebar .search input {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    outline: none;
+}
+
+.sidebar .menu {
+    list-style: none;
+}
+
+.sidebar .menu li {
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.sidebar .menu li:hover {
+    background-color: #fff;
+    border-radius: 5px;
+    color: black;
+}
+
+.sidebar .menu li:active {
+    background-color: #fff;
+    border-radius: 5px;
+    color: black;
+}
+/* Main Content */
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: #fff;
+    border-top-left-radius: 10px;
+    overflow: hidden;
+}
+
+header {
+    background-color: #e0e0e0;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+header .menu-icon {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+header .profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+header .profile img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+header .profile div {
+    text-align: right;
+    font-size: 14px;
+}
+
+.content {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-gap: 20px;
+    padding: 20px;
+}
+
+.card {
+    background-color: white;
+    height: 200px;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.card.extra.large {
+    grid-column: span 3;
+    height: 350px;
+}
+
+.card.large {
+    grid-column: span 1;
+    height: 350px;          
+}
+.footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: #343a40; /* Dark gray color */
+    color: #ffffff; /* White text */
+    text-align: center;
+    padding: 10px 0;
+    font-size: 14px;
+    font-family: Arial, sans-serif;
+    box-shadow: 0 -2px 5px rgba(203, 63, 63, 0.1); /* Subtle shadow for depth */
+}
