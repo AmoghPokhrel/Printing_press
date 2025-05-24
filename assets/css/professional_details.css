@@ -1,0 +1,86 @@
+/* professional_details.css */
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f7fc;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    margin: 20px auto;
+    max-width: 900px;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+h2 {
+    font-size: 24px;
+    color: #5a5a5a;
+    text-align: center;
+}
+
+.back-button {
+    margin: 20px;
+}
+
+.back-button .btn-primary {
+
+    
+    background-color: #28a745; /* Green background color */
+    color: white;
+    text-decoration: none; /* Removes underline */
+    border-radius: 5px;
+    font-size: 16px;
+    border: none; /* Removes any default border */
+}
+
+.back-button .btn-primary:hover {
+    background-color: #218838; /* Darker green when hovered */
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    font-size: 16px;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    background-color: #f1f1f1;
+    font-weight: bold;
+}
+
+td a {
+    color: #4CAF50;
+    text-decoration: none;
+}
+
+td a:hover {
+    text-decoration: underline;
+}
+
+tr:hover {
+    background-color: #f9f9f9;
+}
+
+p {
+    text-align: center;
+    font-size: 18px;
+    color: #666;
+}
+
+.error-message {
+    color: red;
+    font-size: 14px;
+    margin-bottom: 10px;
+}

@@ -1,116 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login Page</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background-color: #fefefe;
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Index Page</title>
+    <link rel="stylesheet" href="assets/css/index.css"> <!-- Link to external CSS -->
+    <script>
+        let currentIndex = 0;
+        let images = ["image/hall a.jpeg", "image/hall b.jpeg", "image/hall bb.jpeg", "image/hall c.jpeg"];
+        let totalImages = images.length;
+        let autoSlide;
 
-    .container {
-      text-align: center;
-      width: 100%;
-      max-width: 400px;
-    }
+        function showImage(index) {
+            const imageElements = document.querySelectorAll('#imageContainer img');
+            imageElements.forEach((img, i) => {
+                img.classList.toggle('active', i === index);
+            });
+        }
 
-    .form-container {
-      background-color: #f9f3f3;
-      padding: 30px 20px;
-      border-radius: 15px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-      margin-bottom: 20px;
-    }
+        function toggleImage(direction) {
+            clearInterval(autoSlide);
+            currentIndex = (currentIndex + direction + totalImages) % totalImages;
+            showImage(currentIndex);
+            autoSlide = setInterval(() => {
+                currentIndex = (currentIndex + 1) % totalImages;
+                showImage(currentIndex);
+            }, 5000);
+        }
 
-    h1 {
-      color: #E63250;
-      font-size: 24px;
-      margin-bottom: 20px;
-    }
-
-    label {
-      display: block;
-      text-align: left;
-      margin-bottom: 5px;
-      font-size: 14px;
-      color: #555;
-    }
-
-    input {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 15px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      font-size: 14px;
-      background-color: #fff;
-    }
-
-    button {
-      width: 100%;
-      padding: 10px;
-      border: none;
-      border-radius: 5px;
-      background-color: #E63250;
-      color: white;
-      font-size: 16px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background-color: #E63250;
-    }
-
-    .forgot-password {
-      display: block;
-      margin-top: 10px;
-      color: #E63250;
-      text-decoration: none;
-      font-size: 14px;
-    }
-
-    .forgot-password:hover {
-      text-decoration: underline;
-    }
-
-    .signup {
-      display: inline-block;
-      margin-top: 20px;
-      padding: 10px 20px;
-      border: 1px solid #E63250;
-      border-radius: 20px;
-      color: #E63250;
-      text-decoration: none;
-      font-size: 16px;
-    }
-
-    .signup:hover {
-      background-color: #E63250;
-      color: white;
-    }
-  </style>
+        document.addEventListener("DOMContentLoaded", () => {
+            autoSlide = setInterval(() => {
+                currentIndex = (currentIndex + 1) % totalImages;
+                showImage(currentIndex);
+            }, 5000);
+        });
+    </script>
 </head>
+
 <body>
-  <div class="container">
-    <div class="form-container">
-      <h1>LOGIN</h1>
-      <form>
-        <label for="username">Username</label>
-        <input type="text" id="username" placeholder="Username" required>
-        <label for="password">Password</label>
-        <input type="password" id="password" placeholder="Password" required>
-        <button type="submit">Login</button>
-        <a href="#" class="forgot-password">Forgotten Password?</a>
-      </form>
+    <nav>
+        <ul>
+            <li class="login"><a href="index.php">Home</a></li>
+            <li class="login"><a href="pages/templets.php">Templates</a></li>
+            <li class="login"><a href="pages/contact.php">Contact</a></li>
+            <li class="login"><a href="pages/login.php">Login</a></li>
+        </ul>
+    </nav>
+    <div class="container">
+        <div class="image-section">
+            <div class="image-container" id="imageContainer">
+                <img class="active" src="assets/images/img1.jpg" alt="Image 1">
+                <img src="assets/images/img2.jpg" alt=" Image 2">
+                <img src="assets/images/img3.jpg" alt=" Image 3">
+                <img src="assets/images/img4.jpg" alt=" Image 4">
+            </div>
+            <button class="toggle-btn prev" onclick="toggleImage(-1)">&#10094;</button>
+            <button class="toggle-btn next" onclick="toggleImage(1)">&#10095;</button>
+        </div>
+        <div class="right">
+            <h2>Welcome to Our Printing Press Management System</h2>
+            <p>Our Printing Press Management System streamlines the entire printing process, from design selection to
+                order completion. Customers can easily browse designs, place orders, and track progress, while the
+                system ensures efficient task management and seamless communication. Experience a faster, smarter, and
+                more organized way to handle printing operations.</p>
+        </div>
     </div>
-    <a href="#" class="signup">Sign Up</a>
-  </div>
 </body>
+
 </html>

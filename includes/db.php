@@ -1,10 +1,10 @@
 <?php
 $servername = "localhost";
-$username_db = "root";
-$password_db = "";
-$database = "studentdata";
+$username = "root";  // Change if needed
+$password = "";      // Change if needed
+$database = "printing_press";
 
-$conn = new mysqli($servername, $username_db, $password_db, $database);
+$conn = new mysqli($servername, $username, $password, $database);
 
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);

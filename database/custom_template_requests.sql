@@ -1,0 +1,36 @@
+CREATE TABLE IF NOT EXISTS `custom_template_requests` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL,
+  `category_id` int(11) NOT NULL,
+  `media_type_id` int(11) NOT NULL,
+  `size` varchar(50) NOT NULL,
+  `orientation` enum('Portrait', 'Landscape') NOT NULL,
+  `color_scheme` varchar(50) NOT NULL,
+  `quantity` int(11) NOT NULL,
+  `additional_notes` text,
+  `reference_image` varchar(255),
+  `status` enum('Pending', 'In Progress', 'Approved', 'Rejected', 'Completed') NOT NULL DEFAULT 'Pending',
+  `assigned_staff_id` int(11) DEFAULT NULL,
+  `preferred_staff_id` int(11) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`),
+  KEY `category_id` (`category_id`),
+  KEY `media_type_id` (`media_type_id`),
+  KEY `assigned_staff_id` (`assigned_staff_id`),
+  KEY `preferred_staff_id` (`preferred_staff_id`),
+  CONSTRAINT `custom_template_requests_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
+  CONSTRAINT `custom_template_requests_ibfk_2` FOREIGN KEY (`category_id`) REFERENCES `category` (`c_id`),
+  CONSTRAINT `custom_template_requests_ibfk_3` FOREIGN KEY (`media_type_id`) REFERENCES `media_type` (`id`),
+  CONSTRAINT `custom_template_requests_ibfk_4` FOREIGN KEY (`assigned_staff_id`) REFERENCES `staff` (`id`),
+  CONSTRAINT `custom_template_requests_ibfk_5` FOREIGN KEY (`preferred_staff_id`) REFERENCES `staff` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+ALTER TABLE `custom_template_requests`
+ADD COLUMN IF NOT EXISTS `generated_templates` text COMMENT 'JSON array of generated template paths',
+ADD COLUMN IF NOT EXISTS `selected_template` varchar(255) COMMENT 'Path to the selected template',
+ADD COLUMN IF NOT EXISTS `final_design` varchar(255) COMMENT 'Path to the final design uploaded by staff',
+ADD COLUMN IF NOT EXISTS `template_content` text COMMENT 'JSON containing all template content and customization options',
+ADD COLUMN IF NOT EXISTS `contact_info` text COMMENT 'JSON containing contact information',
+ADD COLUMN IF NOT EXISTS `business_info` text COMMENT 'JSON containing business information'; 

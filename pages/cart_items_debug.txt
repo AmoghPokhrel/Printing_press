@@ -1,0 +1,19 @@
+Array
+(
+    [0] => Array
+        (
+            [id] => 47
+            [cart_id] => 2
+            [unique_id] => template_681bb63d9e2811.58900755
+            [quantity] => 7
+            [price] => 
+            [created_at] => 2025-05-08 01:21:31
+            [template_id] => 14
+            [request_id] => 21
+            [custom_request_id] => 
+            [final_design] => 
+            [template_name] => Mount Everest
+            [custom_notes] => 
+        )
+
+)
