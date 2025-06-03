@@ -104,26 +104,42 @@ try {
         .reports-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
+            gap: 24px;
             margin: 40px auto;
             max-width: 1200px;
+            padding: 0 20px;
         }
 
         .report-container {
             background: #fff;
-            border-radius: 8px;
+            border-radius: 12px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            padding: 16px 10px;
+            padding: 24px 20px;
             min-width: 0;
             min-height: 0;
         }
 
         .chart-title {
-            font-size: 1.1em;
-            font-weight: bold;
-            margin-bottom: 10px;
-            color: #333;
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 16px;
+            color: #374151;
             text-align: center;
+            font-family: 'Poppins', sans-serif;
+            letter-spacing: 0.01em;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        /* Add responsive styles */
+        @media (max-width: 768px) {
+            .reports-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-title {
+                font-size: 1rem;
+            }
         }
     </style>
 </head>
@@ -133,7 +149,7 @@ try {
     <div class="main-content">
         <?php include('../includes/inner_header.php'); ?>
         <div class="container">
-            <h2><?php echo $pageTitle; ?></h2>
+            <!-- <h2><?php echo $pageTitle; ?></h2> -->
             <div class="reports-grid">
                 <div class="report-container">
                     <div class="chart-title">Monthly Orders</div>

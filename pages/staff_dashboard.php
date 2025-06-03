@@ -83,24 +83,46 @@ if ($recentResult) {
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            min-height: 200px;
         }
 
         .card h3 {
             margin-top: 0;
             color: #333;
+            font-weight: 400;
+            font-family: 'Poppins', sans-serif;
         }
 
         .card .count {
             font-size: 2.5rem;
-            font-weight: bold;
-            color: #3498db;
+            font-weight: 400;
             margin: 10px 0;
+        }
+
+        /* Card specific colors */
+        .card:nth-child(1) .count {
+            color: #3498db;
+            /* Blue for customers */
+        }
+
+        .card:nth-child(2) .count {
+            color: #9b59b6;
+            /* Purple for active tasks */
+        }
+
+        .card:nth-child(3) .count {
+            color: #f39c12;
+            /* Orange for templates */
+        }
+
+        .card:nth-child(4) .count {
+            color: #2ecc71;
+            /* Green for coming soon */
         }
 
         .card a {
             display: inline-block;
             padding: 8px 15px;
-            background: #3498db;
             color: white;
             text-decoration: none;
             border-radius: 4px;
@@ -108,8 +130,25 @@ if ($recentResult) {
             transition: background 0.3s;
         }
 
+        /* Card specific button colors */
+        .card:nth-child(1) a {
+            background: #3498db;
+        }
+
+        .card:nth-child(2) a {
+            background: #9b59b6;
+        }
+
+        .card:nth-child(3) a {
+            background: #f39c12;
+        }
+
+        .card:nth-child(4) a {
+            background: #2ecc71;
+        }
+
         .card a:hover {
-            background: #2980b9;
+            opacity: 0.9;
         }
 
         .card.large {
@@ -122,7 +161,7 @@ if ($recentResult) {
 
         .content {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 20px;
             padding: 20px;
         }
@@ -149,13 +188,15 @@ if ($recentResult) {
         }
 
         .template-name {
-            font-weight: bold;
+            font-weight: 400;
             margin-bottom: 5px;
+            color: #2d3748;
         }
 
         .template-category {
             font-size: 0.8em;
             color: #666;
+            font-weight: 400;
         }
 
         .btn {
@@ -178,6 +219,7 @@ if ($recentResult) {
             <div class="card">
                 <h3>Total Customers</h3>
                 <div class="count"><?php echo $customerCount; ?></div>
+                <a>View All Customers</a>
             </div>
             <div class="card">
                 <h3>Active Tasks</h3>

@@ -62,18 +62,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         move_uploaded_file($_FILES['reference_image']['tmp_name'], $upload_dir . $reference_image);
     }
 
-    // Insert into template_modifications table
-    $insert_query = "INSERT INTO template_modifications (
-        user_id, staff_id, template_id, category_id, media_type_id, 
-        size, orientation, color_scheme, preferred_color, secondary_color, quantity, additional_notes, 
-        reference_image, status, created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', NOW())";
+    // Start transaction
+    $conn->begin_transaction();
 
-    $stmt = $conn->prepare($insert_query);
+    try {
+        // Insert into template_modifications table
+        $insert_query = "INSERT INTO template_modifications (
+            user_id, staff_id, template_id, category_id, media_type_id, 
+            size, orientation, color_scheme, preferred_color, secondary_color, quantity, additional_notes, 
+            reference_image, status, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', NOW())";
 
-    if (!$stmt) {
-        $error_message = "Database error: " . $conn->error;
-    } else {
+        $stmt = $conn->prepare($insert_query);
+
+        if (!$stmt) {
+            throw new Exception("Database error: " . $conn->error);
+        }
+
         $stmt->bind_param(
             "iiiiisssssiss",
             $user_id,
@@ -91,15 +96,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $reference_image
         );
 
-        try {
-            if ($stmt->execute()) {
-                $template_modification_id = $conn->insert_id;
-                header("Location: additional_info_form.php?category_id=" . $category_id . "&request_id=" . $template_modification_id . "&type=modification");
-                exit();
-            }
-        } catch (Exception $e) {
-            $error_message = "Error: " . $e->getMessage();
+        if (!$stmt->execute()) {
+            throw new Exception("Error executing query: " . $stmt->error);
         }
+
+        $template_modification_id = $conn->insert_id;
+
+        // Get staff user details for notification
+        $staff_query = "SELECT u.id as user_id, u.name as staff_name, t.name as template_name 
+                       FROM staff s 
+                       JOIN users u ON s.user_id = u.id 
+                       JOIN templates t ON t.id = ?
+                       WHERE s.id = ?";
+        $staff_stmt = $conn->prepare($staff_query);
+        $staff_stmt->bind_param("ii", $template_id, $staff_id);
+        $staff_stmt->execute();
+        $staff_result = $staff_stmt->get_result();
+        $staff_info = $staff_result->fetch_assoc();
+
+        // Create notification for the staff member
+        $title = "New Template Modification Request";
+        $message = "You have received a new template modification request for template '{$staff_info['template_name']}'";
+
+        // Include create_notification.php if not already included
+        require_once '../includes/create_notification.php';
+
+        // Create notification
+        createNotification(
+            $conn,
+            $staff_info['user_id'],
+            $title,
+            $message,
+            'template_modification',
+            $template_modification_id,
+            'template_modification'
+        );
+
+        $conn->commit();
+
+        // Redirect to additional info form
+        header("Location: additional_info_form.php?category_id=" . $category_id . "&request_id=" . $template_modification_id . "&type=modification");
+        exit();
+
+    } catch (Exception $e) {
+        $conn->rollback();
+        $error_message = "Error: " . $e->getMessage();
     }
 }
 ?>
@@ -115,32 +156,69 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <style>
         .form-container {
             max-width: 1200px;
-            margin: 40px auto;
-            padding: 32px 40px 28px 40px;
+            margin: 15px auto;
+            padding: 20px 30px;
             background: #fff;
             border-radius: 16px;
             box-shadow: 0 6px 32px rgba(44, 62, 80, 0.10), 0 1.5px 4px rgba(44, 62, 80, 0.08);
             transition: box-shadow 0.3s;
+            display: flex;
+            gap: 30px;
         }
 
-        .form-container:hover {
-            box-shadow: 0 10px 40px rgba(44, 62, 80, 0.15), 0 2px 8px rgba(44, 62, 80, 0.10);
+        .template-preview {
+            flex: 0 0 320px;
+            height: fit-content;
+            text-align: center;
+            background: #f4f8fb;
+            border-radius: 10px;
+            padding: 12px;
+            box-shadow: 0 1px 4px rgba(44, 62, 80, 0.07);
+            position: sticky;
+            top: 85px;
+        }
+
+        .container h2 {
+            margin: 15px 0;
+        }
+
+        .form-content {
+            flex: 1;
+        }
+
+        .template-preview img {
+            width: 100%;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            box-shadow: 0 2px 8px rgba(44, 62, 80, 0.10);
+        }
+
+        .template-preview h3 {
+            margin: 12px 0 8px 0;
+            color: #2c3e50;
+            font-size: 1.2rem;
+        }
+
+        .template-preview p {
+            margin: 3px 0;
+            color: #34495e;
+            font-size: 0.9rem;
         }
 
         .form-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            margin-bottom: 20px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 15px;
         }
 
         .form-group {
-            margin-bottom: 22px;
+            margin-bottom: 18px;
         }
 
         .form-group label {
             display: block;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             font-weight: 600;
             color: #34495e;
             letter-spacing: 0.5px;
@@ -148,10 +226,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         .form-control {
             width: 100%;
-            padding: 12px 14px;
+            padding: 10px 12px;
             border: 1.5px solid #d1d8e0;
             border-radius: 6px;
-            font-size: 16px;
+            font-size: 15px;
             background: #f9fafb;
             transition: border-color 0.2s, box-shadow 0.2s;
         }
@@ -230,23 +308,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             transform: translateY(-2px);
         }
 
-        .template-preview {
-            max-width: 320px;
-            margin: 0 auto 28px auto;
-            text-align: center;
-            background: #f4f8fb;
-            border-radius: 10px;
-            padding: 18px 0 10px 0;
-            box-shadow: 0 1px 4px rgba(44, 62, 80, 0.07);
-        }
-
-        .template-preview img {
-            max-width: 90%;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            box-shadow: 0 2px 8px rgba(44, 62, 80, 0.10);
-        }
-
         .alert {
             padding: 14px 18px;
             border-radius: 6px;
@@ -261,7 +322,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             border: 1px solid #f5c6cb;
         }
 
-        @media (max-width: 992px) {
+        @media (max-width: 1200px) {
+            .form-container {
+                flex-direction: column;
+                padding: 20px;
+            }
+
+            .template-preview {
+                position: relative;
+                top: 0;
+                width: 100%;
+                max-width: 320px;
+                margin: 0 auto;
+            }
+
             .form-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
@@ -275,10 +349,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             .color-pickers {
                 flex-direction: column;
                 gap: 10px;
-            }
-
-            .form-container {
-                padding: 16px 16px 12px 16px;
             }
         }
     </style>
@@ -298,85 +368,88 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="form-container">
                 <div class="template-preview">
                     <img src="../uploads/templates/<?php echo htmlspecialchars($template['image_path']); ?>"
-                        alt="<?php echo htmlspecialchars($template['name']); ?>" style="max-width: 100%;">
+                        alt="<?php echo htmlspecialchars($template['name']); ?>">
                     <h3><?php echo htmlspecialchars($template['name']); ?></h3>
                     <p>Category: <?php echo htmlspecialchars($template['category_name']); ?></p>
                     <p>Media Type: <?php echo htmlspecialchars($template['media_type_name']); ?></p>
                 </div>
 
-                <form method="post" enctype="multipart/form-data">
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label for="size">Size</label>
-                            <select name="size" id="size" class="form-control" required>
-                                <option value="">Select Size</option>
-                                <?php
-                                // Fetch sizes for the template's category
-                                $sizes_query = "SELECT * FROM sizes WHERE category_id = ? ORDER BY size_name";
-                                $stmt = $conn->prepare($sizes_query);
+                <div class="form-content">
+                    <form method="post" enctype="multipart/form-data">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="size">Size</label>
+                                <select name="size" id="size" class="form-control" required>
+                                    <option value="">Select Size</option>
+                                    <?php
+                                    // Fetch sizes for the template's category
+                                    $sizes_query = "SELECT * FROM sizes WHERE category_id = ? ORDER BY size_name";
+                                    $stmt = $conn->prepare($sizes_query);
 
-                                if ($stmt) {
-                                    $stmt->bind_param("i", $template['c_id']);
-                                    $stmt->execute();
-                                    $sizes_result = $stmt->get_result();
-                                    while ($size = $sizes_result->fetch_assoc()) {
-                                        echo '<option value="' . htmlspecialchars($size['size_name']) . '">' . htmlspecialchars($size['size_name']) . '</option>';
+                                    if ($stmt) {
+                                        $stmt->bind_param("i", $template['c_id']);
+                                        $stmt->execute();
+                                        $sizes_result = $stmt->get_result();
+                                        while ($size = $sizes_result->fetch_assoc()) {
+                                            echo '<option value="' . htmlspecialchars($size['size_name']) . '">' . htmlspecialchars($size['size_name']) . '</option>';
+                                        }
                                     }
-                                }
-                                ?>
-                            </select>
+                                    ?>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="orientation">Orientation</label>
+                                <select name="orientation" id="orientation" class="form-control" required>
+                                    <option value="Portrait">Portrait</option>
+                                    <option value="Landscape">Landscape</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group" id="color_scheme_group">
+                                <label for="color_scheme">Color Scheme</label>
+                                <select name="color_scheme" id="color_scheme" class="form-control" required
+                                    onchange="toggleColorPicker()">
+                                    <option value="">Select Color Scheme</option>
+                                    <option value="Black and White">Black and White</option>
+                                    <option value="Custom Color">Custom Color</option>
+                                    <option value="Grayscale">Grayscale</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="preferred_color_group" style="display: none;">
+                                <label for="preferred_color">Primary Color</label>
+                                <input type="color" id="preferred_color" name="preferred_color" value="#000000"
+                                    class="form-control" style="width: 60px; height: 40px; padding: 0; border: none;">
+                            </div>
+
+                            <div class="form-group" id="secondary_color_group" style="display: none;">
+                                <label for="secondary_color">Secondary Color (Optional)</label>
+                                <input type="color" id="secondary_color" name="secondary_color" value="#ffffff"
+                                    class="form-control" style="width: 60px; height: 40px; padding: 0; border: none;">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="quantity">Quantity</label>
+                                <input type="number" name="quantity" id="quantity" class="form-control" min="1"
+                                    required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="reference_image">Reference Image (Optional)</label>
+                                <input type="file" name="reference_image" id="reference_image" class="form-control"
+                                    accept="image/*">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="additional_notes">Additional Notes</label>
+                                <textarea name="additional_notes" id="additional_notes" class="form-control"
+                                    rows="4"></textarea>
+                            </div>
                         </div>
 
-                        <div class="form-group">
-                            <label for="orientation">Orientation</label>
-                            <select name="orientation" id="orientation" class="form-control" required>
-                                <option value="Portrait">Portrait</option>
-                                <option value="Landscape">Landscape</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group" id="color_scheme_group">
-                            <label for="color_scheme">Color Scheme</label>
-                            <select name="color_scheme" id="color_scheme" class="form-control" required
-                                onchange="toggleColorPicker()">
-                                <option value="">Select Color Scheme</option>
-                                <option value="Black and White">Black and White</option>
-                                <option value="Custom Color">Custom Color</option>
-                                <option value="Grayscale">Grayscale</option>
-                            </select>
-                        </div>
-                        <div class="form-group" id="preferred_color_group" style="display: none;">
-                            <label for="preferred_color">Primary Color</label>
-                            <input type="color" id="preferred_color" name="preferred_color" value="#000000"
-                                class="form-control" style="width: 60px; height: 40px; padding: 0; border: none;">
-                        </div>
-
-                        <div class="form-group" id="secondary_color_group" style="display: none;">
-                            <label for="secondary_color">Secondary Color (Optional)</label>
-                            <input type="color" id="secondary_color" name="secondary_color" value="#ffffff"
-                                class="form-control" style="width: 60px; height: 40px; padding: 0; border: none;">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="quantity">Quantity</label>
-                            <input type="number" name="quantity" id="quantity" class="form-control" min="1" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="reference_image">Reference Image (Optional)</label>
-                            <input type="file" name="reference_image" id="reference_image" class="form-control"
-                                accept="image/*">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="additional_notes">Additional Notes</label>
-                            <textarea name="additional_notes" id="additional_notes" class="form-control"
-                                rows="4"></textarea>
-                        </div>
-                    </div>
-
-                    <button type="submit" class="btn-submit">Submit Request</button>
-                </form>
+                        <button type="submit" class="btn-submit">Submit Request</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>

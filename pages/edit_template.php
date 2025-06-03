@@ -113,24 +113,60 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_template'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Template</title>
     <link rel="stylesheet" href="../assets/css/registers.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Inter:wght@400;500;600&display=swap"
+        rel="stylesheet">
     <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: #1a202c;
+            line-height: 1.5;
+        }
+
+        .container h2 {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 400;
+            font-size: 1.75rem;
+            color: #2d3748;
+            margin: 1.5rem 0;
+            padding: 0 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            letter-spacing: -0.025em;
+            line-height: 1.4;
+        }
+
+        .container h2::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: #3182ce;
+            border-radius: 2px;
+            margin-right: 0.5rem;
+        }
+
         .edit-form {
             max-width: 600px;
             margin: 20px auto;
-            padding: 20px;
+            padding: 2rem;
             background: #fff;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
 
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 1.5rem;
         }
 
         .form-group label {
             display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
+            margin-bottom: 0.5rem;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: #4a5568;
+            letter-spacing: -0.025em;
         }
 
         .form-group input[type="text"],
@@ -138,39 +174,110 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_template'])) {
         .form-group select,
         .form-group textarea {
             width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            color: #2d3748;
+            transition: all 0.2s ease;
+            background-color: #f8fafc;
         }
 
-        .form-group textarea {
-            height: 100px;
+        .form-group input[type="text"]:focus,
+        .form-group input[type="number"]:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #3182ce;
+            box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+            background-color: #fff;
+        }
+
+        .form-group input[type="file"] {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            padding: 0.5rem 0;
+            color: #4a5568;
         }
 
         .preview-image {
             max-width: 200px;
             max-height: 200px;
-            margin-top: 10px;
+            margin-top: 1rem;
             display: block;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .btn {
-            padding: 10px 15px;
+            padding: 0.75rem 1.5rem;
             border: none;
-            border-radius: 4px;
+            border-radius: 8px;
             cursor: pointer;
-            font-weight: bold;
-            margin-right: 10px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            font-size: 0.95rem;
+            margin-right: 1rem;
+            transition: all 0.2s ease;
         }
 
         .btn-primary {
-            background-color: #3498db;
+            background-color: #3182ce;
             color: white;
         }
 
+        .btn-primary:hover {
+            background-color: #2c5282;
+            transform: translateY(-1px);
+        }
+
         .btn-secondary {
-            background-color: #95a5a6;
+            background-color: #718096;
             color: white;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-secondary:hover {
+            background-color: #4a5568;
+            transform: translateY(-1px);
+        }
+
+        .alert {
+            font-family: 'Inter', sans-serif;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+        }
+
+        .alert-danger {
+            background-color: #fff5f5;
+            color: #c53030;
+            border: 1px solid #feb2b2;
+        }
+
+        @media (max-width: 768px) {
+            .edit-form {
+                margin: 1rem;
+                padding: 1.5rem;
+            }
+
+            .container h2 {
+                font-size: 1.5rem;
+                padding: 0 1rem;
+            }
+
+            .container h2::before {
+                height: 20px;
+            }
+
+            .btn {
+                width: 100%;
+                margin-bottom: 0.75rem;
+                margin-right: 0;
+            }
         }
     </style>
 </head>
@@ -182,7 +289,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_template'])) {
         <?php include('../includes/inner_header.php'); ?>
 
         <div class="container">
-            <h2>Edit Template: <?php echo htmlspecialchars($template['name']); ?></h2>
+            <h2><?php echo htmlspecialchars($template['name']); ?></h2>
 
             <?php if (isset($_SESSION['error_message'])): ?>
                 <div class="alert alert-danger">

@@ -136,34 +136,98 @@ $paginated_staff = array_slice($staff_list, $start, $length);
         .modal {
             display: none;
             position: fixed;
-            z-index: 1000;
+            z-index: 99999;
             left: 0;
             top: 0;
             width: 100%;
             height: 100%;
             background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal.show {
+            opacity: 1;
         }
 
         .modal-content {
-            background-color: #fefefe;
-            margin: 10% auto;
-            padding: 20px;
-            border-radius: 8px;
-            width: 50%;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
             max-width: 500px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            text-align: left;
+            position: relative;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            transform: translateY(-20px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 100000;
+        }
+
+        .modal.show .modal-content {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .modal-content h3 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: #2d3748;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+            font-size: 1.5rem;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .modal-content p {
+            margin: 12px 0;
+            color: #4a5568;
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        .modal-content p strong {
+            color: #2d3748;
+            display: inline-block;
+            width: 120px;
+            font-weight: 500;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .modal-content p span {
+            color: #4a5568;
         }
 
         .close {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            font-size: 24px;
+            color: #a0aec0;
             cursor: pointer;
+            transition: color 0.2s ease, transform 0.2s ease;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
         }
 
         .close:hover {
-            color: black;
+            color: #e53e3e;
+            transform: rotate(90deg);
+        }
+
+        /* Prevent scrolling when modal is open */
+        body.modal-open {
+            overflow: hidden;
         }
 
         /* Form styles */
@@ -300,7 +364,7 @@ $paginated_staff = array_slice($staff_list, $start, $length);
         <?php include('../includes/inner_header.php'); ?>
 
         <div class="container">
-            <h2><?php echo $pageTitle; ?></h2>
+            <!-- <h2><?php echo $pageTitle; ?></h2> -->
 
             <!-- Success/Error Messages -->
             <?php if (isset($_SESSION['success_message'])): ?>
@@ -327,49 +391,78 @@ $paginated_staff = array_slice($staff_list, $start, $length);
                 <table>
                     <thead>
                         <tr>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Phone</th>
-                            <th>Address</th>
-                            <th>Date of Birth</th>
-                            <th>Staff Role</th>
-                            <th>Professional Details</th>
-                            <?php if ($user_role === 'Admin' || $user_role === 'Customer'): ?>
+                            <?php if ($user_role === 'Customer'): ?>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Professional Details</th>
                                 <th>Action</th>
-                            <?php endif; ?>
-                            <?php if ($user_role === 'Super Admin'): ?>
-                                <th>Registered By</th>
+                            <?php else: ?>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Address</th>
+                                <th>Date of Birth</th>
+                                <th>Staff Role</th>
+                                <th>Professional Details</th>
+                                <?php if ($user_role === 'Admin'): ?>
+                                    <th>Action</th>
+                                <?php endif; ?>
+                                <?php if ($user_role === 'Super Admin'): ?>
+                                    <th>Registered By</th>
+                                <?php endif; ?>
                             <?php endif; ?>
                         </tr>
                     </thead>
                     <tbody>
                         <?php foreach ($paginated_staff as $row): ?>
                             <tr>
-                                <td>
-                                    <span class="name-content">
-                                        <?= htmlspecialchars($row['name']) ?>
-                                        <span
-                                            class="status-indicator <?= $row['availability'] === 'active' ? 'status-active' : 'status-inactive' ?>"></span>
-                                    </span>
-                                </td>
-                                <td><?= htmlspecialchars($row['email']) ?></td>
-                                <td><?= htmlspecialchars($row['phone']) ?></td>
-                                <td><?= htmlspecialchars($row['address']) ?></td>
-                                <td><?= htmlspecialchars($row['DOB']) ?></td>
-                                <td><?= htmlspecialchars($row['staff_role']) ?></td>
-                                <td class="prof-details-btns">
-                                    <a href="../modules/view_professional_details.php?id=<?= $row['id']; ?>"
-                                        class="view-details-btn">View</a>
-                                    <?php if ($user_role !== 'Super Admin'): ?>
-                                        <a href="s_professional_register.php?id=<?= $row['id']; ?>"
-                                            class="add-details-btn">Add</a>
-                                        <a href="../modules/edit_professional_details.php?id=<?= $row['id']; ?>"
-                                            class="edit-details-btn">Edit</a>
-                                    <?php endif; ?>
-                                </td>
-                                <?php if ($user_role === 'Admin' || $user_role === 'Customer'): ?>
-                                    <td class="action-buttons">
-                                        <?php if ($user_role === 'Admin'): ?>
+                                <?php if ($user_role === 'Customer'): ?>
+                                    <td>
+                                        <span class="name-content">
+                                            <?= htmlspecialchars($row['name']) ?>
+                                            <span
+                                                class="status-indicator <?= $row['availability'] === 'active' ? 'status-active' : 'status-inactive' ?>"></span>
+                                        </span>
+                                    </td>
+                                    <td><?= htmlspecialchars($row['email']) ?></td>
+                                    <td>
+                                        <a href="../modules/view_professional_details.php?id=<?= $row['id']; ?>"
+                                            class="view-details-btn">View</a>
+                                    </td>
+                                    <td>
+                                        <form method="POST" style="display: inline;">
+                                            <input type="hidden" name="staff_id" value="<?= $row['staff_id'] ?>">
+                                            <?php if (isset($_GET['request_id'])): ?>
+                                                <input type="hidden" name="request_id" value="<?= intval($_GET['request_id']) ?>">
+                                            <?php endif; ?>
+                                            <button type="submit" class="select-btn">Select</button>
+                                        </form>
+                                    </td>
+                                <?php else: ?>
+                                    <td>
+                                        <span class="name-content">
+                                            <?= htmlspecialchars($row['name']) ?>
+                                            <span
+                                                class="status-indicator <?= $row['availability'] === 'active' ? 'status-active' : 'status-inactive' ?>"></span>
+                                        </span>
+                                    </td>
+                                    <td><?= htmlspecialchars($row['email']) ?></td>
+                                    <td><?= htmlspecialchars($row['phone']) ?></td>
+                                    <td><?= htmlspecialchars($row['address']) ?></td>
+                                    <td><?= htmlspecialchars($row['DOB']) ?></td>
+                                    <td><?= htmlspecialchars($row['staff_role']) ?></td>
+                                    <td class="prof-details-btns">
+                                        <a href="../modules/view_professional_details.php?id=<?= $row['id']; ?>"
+                                            class="view-details-btn">View</a>
+                                        <?php if ($user_role !== 'Super Admin'): ?>
+                                            <a href="s_professional_register.php?id=<?= $row['id']; ?>"
+                                                class="add-details-btn">Add</a>
+                                            <a href="../modules/edit_professional_details.php?id=<?= $row['id']; ?>"
+                                                class="edit-details-btn">Edit</a>
+                                        <?php endif; ?>
+                                    </td>
+                                    <?php if ($user_role === 'Admin'): ?>
+                                        <td class="action-buttons">
                                             <button
                                                 class="toggle-btn <?= $row['availability'] === 'active' ? 'active' : 'inactive' ?>"
                                                 onclick="toggleStatus(<?= $row['staff_id'] ?>, '<?= $row['availability'] ?>')">
@@ -380,16 +473,11 @@ $paginated_staff = array_slice($staff_list, $start, $length);
                                             <a href="staff_edit.php?id=<?= $row['id'] ?>" class="edit-btn">Edit</a>
                                             <a href="../modules/staff_delete.php?id=<?= $row['id'] ?>" class="delete-btn"
                                                 onclick="return confirm('Are you sure you want to delete this Staff?');">Delete</a>
-                                        <?php elseif ($user_role === 'Customer'): ?>
-                                            <form method="POST" style="display: inline;">
-                                                <input type="hidden" name="staff_id" value="<?= $row['staff_id'] ?>">
-                                                <button type="submit" class="select-btn">Select</button>
-                                            </form>
-                                        <?php endif; ?>
-                                    </td>
-                                <?php endif; ?>
-                                <?php if ($user_role === 'Super Admin'): ?>
-                                    <td><?= htmlspecialchars($row['admin_name'] ?? 'Unknown') ?></td>
+                                        </td>
+                                    <?php endif; ?>
+                                    <?php if ($user_role === 'Super Admin'): ?>
+                                        <td><?= htmlspecialchars($row['admin_name'] ?? 'Unknown') ?></td>
+                                    <?php endif; ?>
                                 <?php endif; ?>
                             </tr>
                         <?php endforeach; ?>
@@ -415,7 +503,7 @@ $paginated_staff = array_slice($staff_list, $start, $length);
     <!-- Staff View Modal -->
     <div id="staffModal" class="modal">
         <div class="modal-content">
-            <span class="close" onclick="closeModal('staffModal')">&times;</span>
+            <span class="close" onclick="closeModal()">&times;</span>
             <h3>Staff Details</h3>
             <p><strong>Name:</strong> <span id="staffName"></span></p>
             <p><strong>Email:</strong> <span id="staffEmail"></span></p>
@@ -444,31 +532,6 @@ $paginated_staff = array_slice($staff_list, $start, $length);
     </div>
 
     <script>
-        // Function to display confirmation modal
-        function showConfirmationModal(staffId, staffName) {
-            // Create a form element
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '';
-
-            // Add staff_id input
-            const staffInput = document.createElement('input');
-            staffInput.type = 'hidden';
-            staffInput.name = 'staff_id';
-            staffInput.value = staffId;
-            form.appendChild(staffInput);
-
-            // Add the form to the document and submit it
-            document.body.appendChild(form);
-            form.submit();
-        }
-
-        // Function to close modal
-        function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
-        }
-
-        // Function to view staff details in modal
         function viewStaff(name, email, phone, address, dob, staffRole) {
             document.getElementById('staffName').innerText = name;
             document.getElementById('staffEmail').innerText = email;
@@ -476,8 +539,35 @@ $paginated_staff = array_slice($staff_list, $start, $length);
             document.getElementById('staffAddress').innerText = address;
             document.getElementById('staffDOB').innerText = dob;
             document.getElementById('staffRole').innerText = staffRole;
-            document.getElementById('staffModal').style.display = 'block';
+            const modal = document.getElementById('staffModal');
+            document.body.classList.add('modal-open');
+            modal.style.display = 'flex';
+            // Trigger reflow to ensure transition works
+            modal.offsetHeight;
+            modal.classList.add('show');
         }
+
+        function closeModal() {
+            const modal = document.getElementById('staffModal');
+            document.body.classList.remove('modal-open');
+            modal.classList.remove('show');
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300); // Match the transition duration
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('staffModal').addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        document.getElementById('confirmationModal').addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeModal('confirmationModal');
+            }
+        });
 
         // Add this function to your existing JavaScript
         function toggleStatus(staffId, currentStatus) {

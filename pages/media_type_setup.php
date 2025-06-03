@@ -155,6 +155,8 @@ $paginated_media_types = array_slice($mediaTypes, $start, $per_page);
 
         h3 {
             padding-bottom: 25px;
+            font-weight: 500;
+            color: #2d3748;
         }
 
         .form-group {
@@ -164,7 +166,8 @@ $paginated_media_types = array_slice($mediaTypes, $start, $per_page);
         .form-group label {
             display: block;
             margin-bottom: 10px;
-            font-weight: bold;
+            font-weight: 400;
+            color: #4a5568;
         }
 
         .form-group input[type="text"] {
@@ -172,6 +175,8 @@ $paginated_media_types = array_slice($mediaTypes, $start, $per_page);
             padding: 8px;
             border: 1px solid #ddd;
             border-radius: 4px;
+            font-weight: normal;
+            font-family: inherit;
         }
 
         .btn-submit {
@@ -181,6 +186,7 @@ $paginated_media_types = array_slice($mediaTypes, $start, $per_page);
             border: none;
             border-radius: 4px;
             cursor: pointer;
+            font-weight: 400;
         }
 
         .btn-cancel {
@@ -191,6 +197,7 @@ $paginated_media_types = array_slice($mediaTypes, $start, $per_page);
             border-radius: 4px;
             cursor: pointer;
             margin-left: 10px;
+            font-weight: 400;
         }
 
         .btn-submit:hover {
@@ -295,7 +302,7 @@ $paginated_media_types = array_slice($mediaTypes, $start, $per_page);
         <?php include('../includes/inner_header.php'); ?>
 
         <div class="container">
-            <h2><?php echo $pageTitle; ?></h2>
+            <!-- <h2><?php echo $pageTitle; ?></h2> -->
 
             <!-- Media Type Form -->
             <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'Admin'): ?>
@@ -327,7 +334,7 @@ $paginated_media_types = array_slice($mediaTypes, $start, $per_page);
 
             <!-- Media Types Table -->
             <div class="media-types-list">
-                <h3>Existing Media Types</h3>
+                <h3 style="padding-top:20px; padding-bottom: 5px;">Existing Media Types</h3>
 
                 <?php if (!empty($paginated_media_types)): ?>
                     <table class="media-types-table">

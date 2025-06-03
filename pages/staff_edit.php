@@ -37,6 +37,62 @@ $staff = mysqli_fetch_assoc($result);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Staff</title>
     <link rel="stylesheet" href="../assets/css/a_register.css">
+    <style>
+        .main-content {
+            min-height: calc(100vh - 60px);
+            padding-bottom: 60px;
+            position: relative;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto 60px;
+            padding: 0 20px;
+        }
+
+        .back-button {
+            width: 100%;
+            max-width: 1000px;
+            margin: 10px auto;
+            padding: 0;
+            text-align: left;
+            padding-left: 5px;
+        }
+
+        .back-button .btn-primary {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            background-color: #2ecc71;
+            color: white;
+            text-decoration: none;
+            margin-left: 15px;
+        }
+
+        .back-button .btn-primary:hover {
+            transform: translateX(-4px);
+            background-color: #27ae60;
+        }
+
+        h2 {
+            margin-top: 10px;
+            margin-bottom: 20px;
+            color: #2d3748;
+            font-size: 1.8rem;
+            font-weight: 500;
+        }
+
+        form {
+            background: #fff;
+            padding: 25px 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        }
+    </style>
 </head>
 
 <body>
@@ -47,7 +103,7 @@ $staff = mysqli_fetch_assoc($result);
         <?php include('../includes/inner_header.php'); ?>
 
         <div class="back-button">
-            <a href="staff_setup.php" class="btn-primary">Back</a>
+            <a href="staff_setup.php" class="btn-primary">← Back</a>
         </div>
 
         <div class="container">
@@ -71,7 +127,7 @@ $staff = mysqli_fetch_assoc($result);
                 <input type="text" name="address" value="<?php echo htmlspecialchars($staff['address']); ?>" required>
 
                 <label for="dob">Date of Birth:</label>
-                <input type="date" name="dob" value="<?php echo !empty($staff['dob']) ? $staff['dob'] : ''; ?>"
+                <input type="date" name="DOB" value="<?php echo !empty($staff['DOB']) ? $staff['DOB'] : ''; ?>"
                     required>
 
                 <label for="gender">Gender:</label>

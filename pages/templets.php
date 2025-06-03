@@ -9,10 +9,10 @@ if ($categoryResult) {
     $categories = $categoryResult->fetch_all(MYSQLI_ASSOC);
 }
 
-// Fetch limited templates (2 per category) for preview
+// Fetch limited templates (3 per category) for preview
 $templatesByCategory = [];
 foreach ($categories as $category) {
-    $templateQuery = "SELECT * FROM templates WHERE c_id = " . $category['c_id'] . " ORDER BY created_at DESC LIMIT 2";
+    $templateQuery = "SELECT * FROM templates WHERE c_id = " . $category['c_id'] . " ORDER BY created_at DESC LIMIT 3";
     $templateResult = $conn->query($templateQuery);
     if ($templateResult) {
         $templatesByCategory[$category['c_id']] = $templateResult->fetch_all(MYSQLI_ASSOC);
@@ -104,8 +104,10 @@ foreach ($categories as $category) {
 
         .category-title {
             font-size: 24px;
-            color: #333;
+            color: #2563eb;
             margin: 0;
+            font-weight: 500;
+            font-family: 'Segoe UI', Roboto, sans-serif;
         }
 
         .category-description {
@@ -116,24 +118,50 @@ foreach ($categories as $category) {
 
         .templates-container {
             width: 100%;
-            overflow-x: auto;
             margin-bottom: 20px;
             padding-bottom: 10px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            scrollbar-color: #3498db #f1f1f1;
+        }
+
+        .templates-container::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .templates-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .templates-container::-webkit-scrollbar-thumb {
+            background: #3498db;
+            border-radius: 4px;
+        }
+
+        .templates-container::-webkit-scrollbar-thumb:hover {
+            background: #2980b9;
         }
 
         .templates-grid {
             display: flex;
             gap: 20px;
             padding-bottom: 10px;
+            padding-left: 2px;
+            padding-right: 2px;
         }
 
         .template-card {
-            min-width: 250px;
             border: 1px solid #ddd;
             border-radius: 6px;
             overflow: hidden;
             transition: transform 0.3s, box-shadow 0.3s;
-            flex-shrink: 0;
+            background-color: white;
+            width: 320px;
+            flex: 0 0 320px;
+            display: flex;
+            flex-direction: column;
         }
 
         .template-card:hover {
@@ -143,24 +171,33 @@ foreach ($categories as $category) {
 
         .template-image {
             width: 100%;
-            height: 180px;
+            height: 200px;
             object-fit: cover;
+            flex-shrink: 0;
         }
 
         .template-info {
             padding: 15px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 100px;
         }
 
         .template-name {
-            font-weight: bold;
-            margin: 0 0 5px 0;
-            color: #333;
+            font-weight: 500;
+            margin: 0 0 8px 0;
+            color: #2d3748;
+            font-size: 1.1rem;
+            line-height: 1.4;
         }
 
         .template-price {
             color: #e74c3c;
-            font-weight: bold;
-            margin-bottom: 10px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-top: auto;
         }
 
         .see-more-btn {
@@ -183,7 +220,24 @@ foreach ($categories as $category) {
             font-style: italic;
             text-align: center;
             padding: 20px;
-            width: 100%;
+            width: 320px;
+            flex: 0 0 320px;
+        }
+
+        @media screen and (max-width: 992px) {
+            .content {
+                padding: 15px;
+            }
+        }
+
+        @media screen and (max-width: 576px) {
+            .content {
+                padding: 10px;
+            }
+
+            .category-section {
+                padding: 15px;
+            }
         }
     </style>
 </head>
@@ -235,7 +289,7 @@ foreach ($categories as $category) {
 
                                         <div class="template-info">
                                             <h3 class="template-name"><?php echo htmlspecialchars($template['name']); ?></h3>
-                                            <div class="template-price">RS<?php echo number_format($template['cost'], 2); ?></div>
+                                            <div class="template-price">RS <?php echo number_format($template['cost'], 2); ?></div>
                                         </div>
                                     </div>
                                 <?php endforeach; ?>

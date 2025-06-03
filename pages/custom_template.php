@@ -31,33 +31,156 @@ if (!$subscriptionManager->canRequestCustomDesign()) {
 // Handle feedback submission
 if (isset($_POST['submit_feedback'])) {
     try {
-        $request_id = $_POST['request_id'];
-        $is_satisfied = $_POST['is_satisfied'];
-        $feedback = $_POST['feedback'];
+        // Debug log all POST data
+        error_log("DEBUG: Full POST data: " . print_r($_POST, true));
 
-        // Update the latest revision with customer feedback
-        $update_revision = $pdo->prepare("
-            UPDATE design_revisions 
-            SET is_satisfied = ?, feedback = ?
-            WHERE request_id = ? AND revision_number = (
-                SELECT max_revision FROM (
-                    SELECT MAX(revision_number) as max_revision 
-                    FROM design_revisions 
-                    WHERE request_id = ?
-                ) as subquery
-            )
-        ");
-        $update_revision->execute([$is_satisfied, $feedback, $request_id, $request_id]);
-
-        // If not satisfied, set status back to In Progress
-        if (!$is_satisfied) {
-            $stmt = $pdo->prepare("UPDATE custom_template_requests SET status = 'In Progress' WHERE id = ?");
-            $stmt->execute([$request_id]);
-            $success_message = "Feedback submitted. The design will be revised.";
-        } else {
-            $success_message = "Thank you for your feedback!";
+        // Basic validation
+        if (!isset($_POST['request_id']) || !isset($_POST['is_satisfied'])) {
+            throw new Exception("Missing required fields");
         }
+
+        // Get and cast values
+        $request_id = (int) $_POST['request_id'];
+        $is_satisfied = (int) $_POST['is_satisfied'];
+        $feedback = trim($_POST['feedback'] ?? '');
+
+        error_log("DEBUG: Processed values - request_id: $request_id, is_satisfied: $is_satisfied, feedback: $feedback");
+
+        // Validate values
+        if ($request_id <= 0) {
+            throw new Exception("Invalid request ID");
+        }
+
+        if (!in_array($is_satisfied, [0, 1], true)) {
+            throw new Exception("Invalid satisfaction value");
+        }
+
+        if ($is_satisfied === 0 && empty($feedback)) {
+            throw new Exception("Feedback is required when not satisfied");
+        }
+
+        // Get request details for notification
+        $request_stmt = $pdo->prepare("
+            SELECT ctr.*, c.c_Name as category_name, u.name as customer_name 
+            FROM custom_template_requests ctr
+            JOIN category c ON ctr.category_id = c.c_id
+            JOIN users u ON ctr.user_id = u.id
+            WHERE ctr.id = ?
+        ");
+        $request_stmt->execute([$request_id]);
+        $request_details = $request_stmt->fetch(PDO::FETCH_ASSOC);
+
+        error_log("DEBUG: Request details: " . print_r($request_details, true));
+
+        // Get assigned staff details if any
+        $staff_stmt = $pdo->prepare("
+            SELECT u.id as user_id, u.name as staff_name 
+            FROM staff s
+            JOIN users u ON s.user_id = u.id
+            WHERE s.id = ?
+        ");
+        $staff_stmt->execute([$request_details['preferred_staff_id']]);
+        $staff_details = $staff_stmt->fetch(PDO::FETCH_ASSOC);
+
+        error_log("DEBUG: Staff details: " . print_r($staff_details, true));
+
+        $pdo->beginTransaction();
+
+        try {
+            // First, check if there's an existing revision
+            $check_stmt = $pdo->prepare("SELECT COUNT(*) FROM design_revisions WHERE request_id = ?");
+            $check_stmt->execute([$request_id]);
+            $exists = $check_stmt->fetchColumn() > 0;
+
+            if ($exists) {
+                // Update existing revision
+                $stmt = $pdo->prepare("
+            UPDATE design_revisions 
+                    SET is_satisfied = ?,
+                        feedback = ?
+                    WHERE request_id = ?
+        ");
+                $result = $stmt->execute([$is_satisfied, $feedback, $request_id]);
+                error_log("DEBUG: Update result: " . ($result ? 'Success' : 'Failed'));
+            } else {
+                // Insert new revision
+                $stmt = $pdo->prepare("
+                    INSERT INTO design_revisions 
+                    (request_id, revision_number, is_satisfied, feedback, created_at) 
+                    VALUES (?, 1, ?, ?, CURRENT_TIMESTAMP)
+                ");
+                $result = $stmt->execute([$request_id, $is_satisfied, $feedback]);
+                error_log("DEBUG: Insert result: " . ($result ? 'Success' : 'Failed'));
+            }
+
+            // Update request status
+            $status = $is_satisfied === 1 ? 'Completed' : 'In Progress';
+            $stmt = $pdo->prepare("UPDATE custom_template_requests SET status = ? WHERE id = ?");
+            $result = $stmt->execute([$status, $request_id]);
+            error_log("DEBUG: Status update result: " . ($result ? 'Success' : 'Failed'));
+
+            // Prepare notification content
+            $notification_title = $is_satisfied === 1
+                ? "Design Approved ✓"
+                : "Design Revision Requested";
+
+            $notification_message = $is_satisfied === 1
+                ? "Customer {$request_details['customer_name']} has approved the design for {$request_details['category_name']} (Request #$request_id)"
+                : "Customer {$request_details['customer_name']} has requested revisions for {$request_details['category_name']} (Request #$request_id). Feedback: {$feedback}";
+
+            error_log("DEBUG: Preparing to send notification - Title: $notification_title, Message: $notification_message");
+
+            // Get all staff members regardless of assignment
+            $all_staff_stmt = $pdo->prepare("
+                SELECT DISTINCT u.id as user_id, u.name as staff_name
+                FROM users u
+                WHERE u.role = 'Staff'
+            ");
+            $all_staff_stmt->execute();
+            $all_staff = $all_staff_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            error_log("DEBUG: Found " . count($all_staff) . " staff members to notify");
+
+            // Notify all staff members
+            foreach ($all_staff as $staff) {
+                try {
+                    $stmt = $pdo->prepare("
+                        INSERT INTO notifications 
+                        (user_id, title, message, type, reference_id, reference_type, created_at, is_read) 
+                        VALUES (?, ?, ?, 'custom_design_feedback', ?, 'custom_template', CURRENT_TIMESTAMP, 0)
+                    ");
+
+                    $notification_result = $stmt->execute([
+                        $staff['user_id'],
+                        $notification_title,
+                        $notification_message,
+                        $request_id
+                    ]);
+
+                    error_log("DEBUG: Notification created for staff ID {$staff['user_id']} - Result: " . ($notification_result ? 'Success' : 'Failed'));
+                } catch (Exception $e) {
+                    error_log("DEBUG: Error creating notification for staff ID {$staff['user_id']}: " . $e->getMessage());
+                }
+            }
+
+            $pdo->commit();
+            error_log("DEBUG: Transaction committed successfully");
+
+            $success_message = $is_satisfied === 1 ?
+                "Thank you for your feedback! The staff has been notified." :
+                "Feedback submitted. The design will be revised.";
+
+            header("Location: custom_template.php?success_message=" . urlencode($success_message));
+            exit();
+
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            error_log("DEBUG: Database error: " . $e->getMessage());
+            throw $e;
+        }
+
     } catch (Exception $e) {
+        error_log("DEBUG: General error: " . $e->getMessage());
         $error_message = "Error: " . $e->getMessage();
     }
 }
@@ -184,6 +307,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_request'])) {
                 debug_log("Successfully inserted request with ID: " . $request_id);
                 $pdo->commit();
 
+                // Create notification for admin users
+                $admin_notification_stmt = $pdo->prepare("
+                    INSERT INTO notifications (user_id, title, message, type, reference_id, reference_type)
+                    SELECT 
+                        u.id,
+                        'New Custom Template Request',
+                        CONCAT('A new custom template request has been submitted for ', c.c_Name),
+                        'custom_request',
+                        ?,
+                        'custom_template'
+                    FROM users u
+                    CROSS JOIN category c
+                    WHERE u.role = 'Admin'
+                    AND c.c_id = ?
+                ");
+                $admin_notification_stmt->execute([$request_id, $category_id]);
+
+                // Increment the counter before redirecting
+                $subscriptionManager->incrementCustomDesignCount();
+
                 // Redirect to additional information form with success message
                 header("Location: additional_info_form.php?category_id=" . $category_id . "&request_id=" . $request_id . "&type=custom&success_message=" . urlencode("Custom template request submitted successfully!"));
                 exit();
@@ -193,9 +336,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_request'])) {
         } else {
             throw new Exception("Please upload a reference image.");
         }
-
-        // If the request is successful, increment the counter
-        $subscriptionManager->incrementCustomDesignCount();
     } catch (Exception $e) {
         $pdo->rollBack();
         $error_message = "Error: " . $e->getMessage();
@@ -566,60 +706,127 @@ require_once '../includes/header.php';
         .modal {
             display: none;
             position: fixed;
-            z-index: 1000;
+            z-index: 99999;
+            /* Increased z-index */
             left: 0;
             top: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
+            background-color: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(5px);
         }
 
         .modal-content {
-            background-color: #fff;
-            margin: 5% auto;
-            padding: 20px;
-            border-radius: 8px;
-            width: 90%;
-            max-width: 500px;
             position: relative;
+            background-color: transparent;
+            margin: 2% auto;
+            padding: 20px;
+            width: 90%;
+            max-width: 1200px;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
 
         .modal-image {
-            max-width: 90%;
-            max-height: 90vh;
+            max-width: 100%;
+            max-height: 85vh;
             object-fit: contain;
             border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-            transform: scale(0.95);
-            transition: transform 0.3s ease;
-        }
-
-        .modal.show .modal-image {
-            transform: scale(1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         }
 
         .close {
             position: fixed;
-            top: 20px;
-            right: 30px;
-            color: #fff;
-            font-size: 35px;
-            font-weight: bold;
-            cursor: pointer;
-            z-index: 1001;
+            right: 25px;
+            top: 25px;
             width: 40px;
             height: 40px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            background-color: rgba(0, 0, 0, 0.5);
-            border-radius: 50%;
+            font-size: 24px;
+            color: #333;
+            cursor: pointer;
             transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            z-index: 100000;
+            /* Even higher z-index for close button */
+            text-decoration: none;
+            border: none;
+            outline: none;
         }
 
         .close:hover {
-            background-color: rgba(255, 255, 255, 0.2);
-            transform: rotate(90deg);
+            background: #ffffff;
+            transform: scale(1.1) rotate(90deg);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            color: #dc3545;
+        }
+
+        .modal-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50px;
+            height: 50px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: translate(-50%, -50%) rotate(0deg);
+            }
+
+            100% {
+                transform: translate(-50%, -50%) rotate(360deg);
+            }
+        }
+
+        /* Details modal specific styles */
+        .details-modal {
+            display: none;
+            position: fixed;
+            z-index: 99999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(5px);
+        }
+
+        .details-modal-content {
+            background-color: #fff;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        /* Feedback modal specific styles */
+        #feedbackModal .modal-content {
+            background-color: #fff;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            padding: 30px;
+            margin: 5% auto;
+            position: relative;
         }
 
         .modal-caption {
@@ -759,42 +966,6 @@ require_once '../includes/header.php';
 
         .view-details-btn:hover {
             transform: scale(1.1);
-        }
-
-        .details-modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(5px);
-        }
-
-        .details-modal-content {
-            background-color: #fff;
-            margin: 5% auto;
-            padding: 30px;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 500px;
-            position: relative;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-            animation: modalSlideIn 0.3s ease-out;
-        }
-
-        @keyframes modalSlideIn {
-            from {
-                transform: translateY(-20px);
-                opacity: 0;
-            }
-
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
         }
 
         .details-header {
@@ -1087,6 +1258,42 @@ require_once '../includes/header.php';
         .btn-info:hover {
             background-color: #217dbb;
         }
+
+        /* Add these styles to your existing CSS */
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .radio-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .radio-group label:hover {
+            background-color: #f5f5f5;
+        }
+
+        .radio-group input[type="radio"] {
+            margin: 0;
+        }
+
+        .radio-group input[type="radio"]:checked+span {
+            font-weight: bold;
+        }
+
+        .radio-group label:has(input[type="radio"]:checked) {
+            border-color: #007bff;
+            background-color: #e7f1ff;
+        }
     </style>
     <script>
         // Function to filter sizes based on selected category
@@ -1182,59 +1389,49 @@ require_once '../includes/header.php';
             }
         });
 
-        function showFeedbackModal(requestId) {
-            console.log('Opening feedback modal for request:', requestId); // Debug log
-            const modal = document.getElementById('feedbackModal');
-            document.getElementById('feedback_request_id').value = requestId;
-            modal.style.display = 'block';
+        function handleSatisfactionChange(value) {
+            const feedbackGroup = document.getElementById('feedbackNoteGroup');
+            const feedbackInput = document.getElementById('feedback');
 
-            // Reset form
-            document.getElementById('feedback').value = '';
-            document.querySelectorAll('input[name="is_satisfied"]').forEach(radio => {
-                radio.checked = false;
-            });
-            document.getElementById('feedbackNoteGroup').style.display = 'none';
-
-            // Remove selected class from all options
-            document.querySelectorAll('.satisfaction-option').forEach(opt => {
-                opt.classList.remove('selected');
-            });
+            if (value === 1) {
+                feedbackGroup.style.display = 'none';
+                feedbackInput.value = 'Customer is satisfied with the design.';
+            } else {
+                feedbackGroup.style.display = 'block';
+                feedbackInput.value = '';
+            }
         }
 
-        // Add click event listeners for satisfaction options
-        document.addEventListener('DOMContentLoaded', function () {
-            const satisfactionOptions = document.querySelectorAll('.satisfaction-option');
-            const feedbackInputs = document.querySelectorAll('input[name="is_satisfied"]');
+        function showFeedbackModal(requestId) {
+            console.log('Opening feedback modal for request:', requestId);
+            const modal = document.getElementById('feedbackModal');
+            const form = document.getElementById('feedbackForm');
 
-            satisfactionOptions.forEach(option => {
-                option.addEventListener('click', function () {
-                    const radio = this.querySelector('input[type="radio"]');
-                    radio.checked = true;
+            // Reset form
+            form.reset();
+            document.getElementById('feedback_request_id').value = requestId;
+            document.getElementById('feedbackNoteGroup').style.display = 'none';
 
-                    // Remove selected class from all options
-                    satisfactionOptions.forEach(opt => opt.classList.remove('selected'));
-                    // Add selected class to clicked option
-                    this.classList.add('selected');
+            // Show modal
+            modal.style.display = 'block';
 
-                    // Show/hide feedback textarea based on selection
+            // Add change event listeners to radio buttons
+            const radioButtons = form.querySelectorAll('input[name="is_satisfied"]');
+            radioButtons.forEach(radio => {
+                radio.addEventListener('change', function () {
                     const feedbackGroup = document.getElementById('feedbackNoteGroup');
-                    feedbackGroup.style.display = radio.value === '0' ? 'block' : 'none';
+                    feedbackGroup.style.display = this.value === '0' ? 'block' : 'none';
 
-                    if (radio.value === '1') {
+                    if (this.value === '1') {
                         document.getElementById('feedback').value = 'Customer is satisfied with the design.';
                     } else {
                         document.getElementById('feedback').value = '';
                     }
-                });
-            });
 
-            feedbackInputs.forEach(input => {
-                input.addEventListener('change', function () {
-                    const feedbackGroup = document.getElementById('feedbackNoteGroup');
-                    feedbackGroup.style.display = this.value === '0' ? 'block' : 'none';
+                    console.log('Radio button changed - Value:', this.value);
                 });
             });
-        });
+        }
 
         // Function to handle alert messages
         function handleAlerts() {
@@ -1450,6 +1647,29 @@ require_once '../includes/header.php';
             // Initial setup
             toggleColorPicker();
         });
+
+        // Add this function to validate the form before submission
+        function validateFeedbackForm() {
+            const form = document.getElementById('feedbackForm');
+            const selectedValue = form.querySelector('input[name="is_satisfied"]:checked');
+            const feedbackText = document.getElementById('feedback').value.trim();
+
+            console.log('Form validation - Selected value:', selectedValue ? selectedValue.value : 'none');
+            console.log('Form validation - Feedback text:', feedbackText);
+
+            if (!selectedValue) {
+                alert('Please select whether you are satisfied with the design.');
+                return false;
+            }
+
+            const isSatisfied = parseInt(selectedValue.value);
+            if (isSatisfied === 0 && !feedbackText) {
+                alert('Please provide feedback for the revision.');
+                return false;
+            }
+
+            return true;
+        }
     </script>
 </head>
 
@@ -1507,12 +1727,10 @@ require_once '../includes/header.php';
                             <select name="size" id="size" class="form-control" required>
                                 <option value="">Select Size</option>
                                 <?php
-                                // Fetch all sizes from the database
+                                // Fetch all sizes from the database using PDO
                                 $sizes_query = "SELECT * FROM sizes ORDER BY size_name";
-                                $stmt = $conn->prepare($sizes_query);
-                                $stmt->execute();
-                                $sizes_result = $stmt->get_result();
-                                while ($size = $sizes_result->fetch_assoc()) {
+                                $stmt = $pdo->query($sizes_query);
+                                while ($size = $stmt->fetch(PDO::FETCH_ASSOC)) {
                                     echo '<option value="' . htmlspecialchars($size['size_name']) . '" data-category="' . htmlspecialchars($size['category_id']) . '">' . htmlspecialchars($size['size_name']) . '</option>';
                                 }
                                 ?>
@@ -1746,7 +1964,8 @@ require_once '../includes/header.php';
                 <div class="modal-content">
                     <span class="close" onclick="closeModal('feedbackModal')">&times;</span>
                     <h3>Design Feedback</h3>
-                    <form method="POST" class="feedback-form">
+                    <form id="feedbackForm" method="POST" class="feedback-form"
+                        onsubmit="return validateFeedbackForm()">
                         <input type="hidden" name="request_id" id="feedback_request_id">
                         <div class="form-group">
                             <label>Are you satisfied with the design?</label>

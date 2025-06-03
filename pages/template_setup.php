@@ -96,71 +96,105 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             margin: 20px auto;
             padding: 30px;
             background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.08);
+            font-family: 'Inter', sans-serif;
         }
 
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 24px;
         }
 
         .form-group label {
             display: block;
             margin-bottom: 8px;
-            font-weight: 600;
-            color: #495057;
+            font-weight: 500;
+            color: #374151;
+            font-size: 0.95rem;
+            font-family: 'Poppins', sans-serif;
+            letter-spacing: 0.01em;
         }
 
         .form-control {
             width: 100%;
-            padding: 10px 15px;
-            border: 1px solid #ced4da;
-            border-radius: 4px;
-            font-size: 16px;
-            transition: border-color 0.3s;
+            padding: 12px 16px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-family: 'Inter', sans-serif;
+            color: #1f2937;
+            transition: all 0.2s ease;
+            background-color: #f9fafb;
         }
 
         .form-control:focus {
-            border-color: #80bdff;
+            border-color: #3b82f6;
             outline: 0;
-            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            background-color: #fff;
+        }
+
+        .form-control::placeholder {
+            color: #9ca3af;
+        }
+
+        select.form-control {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 16px;
+            padding-right: 40px;
         }
 
         .btn-primary {
-            background-color: #007bff;
+            background: linear-gradient(to right, #2563eb, #3b82f6);
             color: white;
-            padding: 10px 20px;
+            padding: 12px 24px;
             border: none;
-            border-radius: 4px;
+            border-radius: 8px;
             cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s;
+            font-size: 0.95rem;
+            font-weight: 500;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
         }
 
         .btn-primary:hover {
-            background-color: #0069d9;
+            background: linear-gradient(to right, #1d4ed8, #2563eb);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2);
         }
 
         .alert {
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 4px;
+            padding: 16px;
+            margin-bottom: 24px;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
         .alert-success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+            background-color: #ecfdf5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
         }
 
         .alert-danger {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+            background-color: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
         }
 
-        .alert {
-            transition: opacity 0.5s ease-out;
+        input[type="file"].form-control {
+            padding: 10px;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            color: #4b5563;
         }
     </style>
 </head>
@@ -170,7 +204,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <div class="main-content">
         <?php include('../includes/inner_header.php'); ?>
         <div class="container">
-            <h2><?php echo $pageTitle; ?></h2>
+            <!-- <h2><?php echo $pageTitle; ?></h2> -->
             <div class="form-container">
                 <?php if (!empty($success_message)): ?>
                     <div class="alert alert-success" id="successMessage"><?php echo $success_message; ?></div>

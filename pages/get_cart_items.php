@@ -25,12 +25,16 @@ if ($cart_result->num_rows === 0) {
 $cart_id = $cart_result->fetch_assoc()['id'];
 
 // Fetch cart items
-$sql = "SELECT cil.id, cil.quantity, cil.template_id, cil.request_id, cil.custom_request_id, cil.final_design AS cil_final_design, cil.price, cil.status,
-       cil.req_type,
-       tm.final_design AS modification_final_design,
-       t.name AS template_name, t.image_path AS template_image, t.cost AS template_cost
+$sql = "SELECT cil.*, 
+       t.name AS template_name, 
+       t.image_path AS template_image, 
+       t.cost AS template_cost,
+       ctr.additional_notes as custom_notes, 
+       ctr.final_design as custom_final_design,
+       tm.final_design as modification_final_design
 FROM cart_item_line cil
 LEFT JOIN templates t ON cil.template_id = t.id
+LEFT JOIN custom_template_requests ctr ON cil.custom_request_id = ctr.id
 LEFT JOIN template_modifications tm ON cil.request_id = tm.id
 WHERE cil.cart_id = ? AND (cil.status = 'active' OR cil.status IS NULL)
 ORDER BY cil.id DESC";
@@ -58,23 +62,21 @@ $total = 0;
 while ($row = $result->fetch_assoc()) {
     error_log("Processing item: " . json_encode($row));
 
-    // For custom templates, fetch latest design revision for image and price
-    $custom_image = null;
-    $custom_price = null;
-    if (!empty($row['request_id'])) {
-        $rev_stmt = $conn->prepare("SELECT final_design, price FROM design_revisions WHERE request_id = ? ORDER BY revision_number DESC LIMIT 1");
-        $rev_stmt->bind_param('i', $row['request_id']);
-        $rev_stmt->execute();
-        $rev_result = $rev_stmt->get_result();
-        if ($rev_row = $rev_result->fetch_assoc()) {
-            error_log('Design revision for request_id ' . $row['request_id'] . ': ' . print_r($rev_row, true));
-            $custom_image = $rev_row['final_design'] ? '/printing_press/uploads/custom_templates/' . $rev_row['final_design'] : null;
-            $custom_price = is_numeric($rev_row['price']) ? (float) $rev_row['price'] : null;
+    // Set image path based on req_type
+    $image = '';
+    if (!empty($row['req_type'])) {
+        if ($row['req_type'] === 'modify') {
+            $image = '../uploads/template_designs/' . $row['modification_final_design'];
+        } elseif ($row['req_type'] === 'custom') {
+            $image = '../uploads/custom_templates/' . $row['custom_final_design'];
         }
-        $rev_stmt->close();
+    } else {
+        if (!empty($row['template_image'])) {
+            $image = '../uploads/template_images/' . $row['template_image'];
+        }
     }
 
-    // Price logic: custom templates from design_revisions, others from templates
+    // Calculate price
     $price = 0;
     if (!empty($row['custom_request_id'])) {
         $rev_stmt = $conn->prepare("SELECT price FROM design_revisions WHERE request_id = ? ORDER BY revision_number DESC LIMIT 1");
@@ -89,35 +91,18 @@ while ($row = $result->fetch_assoc()) {
         $price = (float) $row['template_cost'];
     }
 
-    // Set image path based on req_type
-    $image = '';
-    if (!empty($row['req_type'])) {
-        if ($row['req_type'] === 'modify') {
-            $image = '/printing_press/uploads/template_designs/' . $row['cil_final_design'];
-        } elseif ($row['req_type'] === 'custom') {
-            $image = '/printing_press/uploads/custom_templates/' . $row['cil_final_design'];
-        }
-    } else {
-        // Fallback logic if req_type is missing
-        if (!empty($row['template_id']) && !empty($row['cil_final_design'])) {
-            $image = '/printing_press/uploads/template_designs/' . $row['cil_final_design'];
-        } elseif (!empty($row['custom_request_id']) && !empty($row['cil_final_design'])) {
-            $image = '/printing_press/uploads/custom_templates/' . $row['cil_final_design'];
-        } elseif (!empty($row['template_image'])) {
-            $image = '/printing_press/uploads/template_images/' . $row['template_image'];
-        }
-    }
-
     $item = [
         'id' => $row['id'],
         'quantity' => $row['quantity'],
         'type' => $row['template_id'] ? 'template' : 'custom',
         'name' => $row['template_id'] ? $row['template_name'] : 'Custom Design',
         'image' => $image,
-        'notes' => '',
+        'notes' => $row['custom_notes'] ?? '',
         'price' => $price,
         'status' => $row['status']
     ];
+
+    $total += $price * $row['quantity'];
     $items[] = $item;
 }
 

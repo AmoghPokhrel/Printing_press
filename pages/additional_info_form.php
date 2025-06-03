@@ -2,7 +2,7 @@
 session_start();
 require_once('../includes/dbcon.php');
 
-// Add debug logging function
+
 function debug_log($message) {
     error_log("[Additional Info Debug] " . $message);
 }
@@ -10,7 +10,7 @@ function debug_log($message) {
 // Debug marker
 echo '<!-- additional_info_form.php loaded -->';
 
-// Get category ID and request ID from URL
+
 $category_id = $_GET['category_id'] ?? null;
 $request_id = $_GET['request_id'] ?? null;
 $request_type = $_GET['type'] ?? 'custom';
@@ -19,7 +19,7 @@ if (!$category_id || !$request_id) {
     die('Invalid category or request.');
 }
 
-// Fetch category name
+
 $stmt = $pdo->prepare("SELECT c_Name FROM category WHERE c_id = ?");
 $stmt->execute([$category_id]);
 $category = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -27,7 +27,6 @@ if (!$category) {
     die('Category not found.');
 }
 
-// Fetch additional fields for this category
 $stmt = $pdo->prepare("
     SELECT aif.*, aft.name as type_name, aft.type as field_type
     FROM additional_info_fields aif
@@ -48,18 +47,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         debug_log("Processing form for table: " . $table_name . ", request_type: " . $request_type);
 
-        // Check if table exists
         $check_table = $pdo->query("SHOW TABLES LIKE '$table_name'");
         if ($check_table->rowCount() === 0) {
             throw new Exception("Additional information table for this category does not exist.");
         }
 
-        // Prepare columns and values
         $columns = ['user_id', 'request_type'];
         $values = [$_SESSION['user_id'], $request_type];
         $placeholders = ['?', '?'];
 
-        // Add the appropriate ID column based on request type
         if ($request_type === 'modification') {
             $columns[] = 'template_modification_id';
             $values[] = $request_id;
@@ -73,7 +69,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         debug_log("Processing " . count($fields) . " dynamic fields");
 
-        // Add dynamic fields
         foreach ($fields as $field) {
             $columns[] = $field['field_name'];
             $placeholders[] = '?';
@@ -106,7 +101,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $columns_str = implode(', ', $columns);
         $placeholders_str = implode(', ', $placeholders);
 
-        // Check if record exists
         $check_sql = "SELECT id FROM $table_name WHERE user_id = ? AND $id_column = ?";
         $stmt = $pdo->prepare($check_sql);
         $stmt->execute([$_SESSION['user_id'], $request_id]);
@@ -114,11 +108,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($existing) {
             debug_log("Updating existing record");
-            // Update existing record
             $set_clause = implode(' = ?, ', $columns) . ' = ?';
             $update_sql = "UPDATE $table_name SET $set_clause WHERE user_id = ? AND $id_column = ?";
             
-            // Add the WHERE clause values to the values array
             $update_values = array_merge($values, [$_SESSION['user_id'], $request_id]);
             
             debug_log("Update SQL: " . $update_sql);
@@ -191,6 +183,7 @@ try {
 <body>
     <?php include('../includes/header.php'); ?>
     <div class="main-content">
+    <?php include('../includes/inner_header.php'); ?>
         <div class="container">
             <h1>Additional Information </h1>
             <?php if ($success_message): ?>

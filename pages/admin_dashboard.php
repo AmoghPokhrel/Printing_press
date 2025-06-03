@@ -56,6 +56,23 @@ if ($recentUsersResult) {
     $recentUsers = $recentUsersResult->fetch_all(MYSQLI_ASSOC);
 }
 
+// Get staff template creation statistics
+$staffTemplateStats = [];
+$templateStatsQuery = "
+    SELECT u.name as staff_name, COUNT(t.id) as template_count 
+    FROM staff s 
+    JOIN users u ON s.user_id = u.id 
+    LEFT JOIN templates t ON s.id = t.staff_id 
+    WHERE s.availability = 'active'
+    GROUP BY s.id, u.name 
+    ORDER BY template_count DESC";
+$templateStatsResult = $conn->query($templateStatsQuery);
+if ($templateStatsResult) {
+    while ($row = $templateStatsResult->fetch_assoc()) {
+        $staffTemplateStats[] = $row;
+    }
+}
+
 // --- Add bar graph queries for Super Admin ---
 $monthlyOrders = $staffTemplates = [];
 if ($_SESSION['role'] === 'Super Admin') {
@@ -88,9 +105,9 @@ if ($_SESSION['role'] === 'Super Admin') {
     <style>
         .card {
             padding: 20px;
-            border-radius: 8px;
+            border-radius: 12px;
             background: white;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -98,13 +115,18 @@ if ($_SESSION['role'] === 'Super Admin') {
 
         .card h3 {
             margin-top: 0;
-            color: #333;
+            color: #374151;
+            font-weight: 500;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.1rem;
+            letter-spacing: 0.01em;
         }
 
         .card .count {
             font-size: 2.5rem;
-            font-weight: bold;
+            font-weight: 400;
             margin: 10px 0;
+            font-family: 'Inter', sans-serif;
         }
 
         .card.users .count {
@@ -179,12 +201,13 @@ if ($_SESSION['role'] === 'Super Admin') {
 
         .user-item {
             margin-bottom: 15px;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 5px;
+            padding: 12px;
+            background: #f8fafc;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            font-family: 'Inter', sans-serif;
         }
 
         .user-info {
@@ -192,18 +215,22 @@ if ($_SESSION['role'] === 'Super Admin') {
         }
 
         .user-name {
-            font-weight: bold;
+            font-weight: 500;
             margin-bottom: 5px;
+            color: #1f2937;
+            font-size: 0.95rem;
         }
 
         .user-role {
-            font-size: 0.8em;
-            color: #666;
+            font-size: 0.85rem;
+            color: #4b5563;
+            font-weight: 400;
         }
 
         .user-date {
-            font-size: 0.8em;
-            color: #999;
+            font-size: 0.85rem;
+            color: #6b7280;
+            font-weight: 400;
         }
 
         .btn {
@@ -230,6 +257,14 @@ if ($_SESSION['role'] === 'Super Admin') {
         .btn-warning {
             background: #f39c12;
         }
+
+        /* Update chart title styles */
+        div[style*="font-weight: bold"] {
+            font-weight: 500 !important;
+            font-family: 'Poppins', sans-serif !important;
+            color: #374151 !important;
+            font-size: 1rem !important;
+        }
     </style>
 </head>
 
@@ -242,7 +277,7 @@ if ($_SESSION['role'] === 'Super Admin') {
                 <div class="card users">
                     <h3>Total Users</h3>
                     <div class="count"><?php echo $userCount; ?></div>
-                    <a href="manage_users.php">Manage Users</a>
+                    <a>Manage Users</a>
                 </div>
             <?php endif; ?>
             <div class="card staff">
@@ -253,7 +288,7 @@ if ($_SESSION['role'] === 'Super Admin') {
             <div class="card customers">
                 <h3>Total Customers</h3>
                 <div class="count"><?php echo $customerCount; ?></div>
-                <a href="manage_customers.php">Manage Customers</a>
+                <a>Manage Customers</a>
             </div>
             <div class="card templates">
                 <h3>Total Templates</h3>
@@ -280,25 +315,42 @@ if ($_SESSION['role'] === 'Super Admin') {
 
             <div class="card extra large">
                 <h3>System Overview</h3>
-
-                <?php if ($_SESSION['role'] === 'Super Admin'): ?>
+                <?php if ($_SESSION['role'] === 'Admin' || $_SESSION['role'] === 'Super Admin'): ?>
                     <div
                         style="display: flex; flex-wrap: wrap; gap: 24px; justify-content: center; align-items: flex-start; margin-top: 20px;">
-                        <div
-                            style="flex: 1 1 320px; min-width: 300px; max-width: 480px; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 16px 10px;">
-                            <div style="font-weight: bold; text-align: center; margin-bottom: 10px;">Monthly Orders</div>
-                            <canvas id="monthlyOrdersChart" height="90"></canvas>
-                        </div>
-                        <div
-                            style="flex: 1 1 320px; min-width: 300px; max-width: 480px; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 16px 10px;">
-                            <div style="font-weight: bold; text-align: center; margin-bottom: 10px;">Most Ordered Staff
-                                Templates</div>
-                            <canvas id="staffTemplatesChart" height="90"></canvas>
-                        </div>
+                        <?php if ($_SESSION['role'] === 'Super Admin'): ?>
+                            <div
+                                style="flex: 1 1 320px; min-width: 300px; max-width: 480px; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 16px 10px; height: 250px; position: relative;">
+                                <div style="font-weight: bold; text-align: center; margin-bottom: 10px;">Monthly Orders</div>
+                                <div style="position: relative; height: 200px;">
+                                    <canvas id="monthlyOrdersChart"></canvas>
+                                </div>
+                            </div>
+                            <div
+                                style="flex: 1 1 320px; min-width: 300px; max-width: 480px; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 16px 10px; height: 250px; position: relative;">
+                                <div style="font-weight: bold; text-align: center; margin-bottom: 10px;">Most Ordered Staff
+                                    Templates</div>
+                                <div style="position: relative; height: 200px;">
+                                    <canvas id="staffTemplatesChart"></canvas>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+                        <?php if ($_SESSION['role'] === 'Admin'): ?>
+                            <div
+                                style="flex: 1 1 320px; min-width: 300px; max-width: 600px; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 16px; height: 280px;">
+                                <div style="font-weight: bold; text-align: center; margin-bottom: 10px;">Templates Created by
+                                    Staff</div>
+                                <div style="position: relative; height: 230px; width: 100%;">
+                                    <canvas id="staffTemplateChart"></canvas>
+                                </div>
+                            </div>
+                        <?php endif; ?>
                     </div>
-                    <div style="text-align: right; margin-top: 10px;">
-                        <a href="reports.php" class="btn btn-primary">See More</a>
-                    </div>
+                    <?php if ($_SESSION['role'] === 'Super Admin'): ?>
+                        <div style="text-align: right; margin-top: 10px;">
+                            <a href="reports.php" class="btn btn-primary">See More</a>
+                        </div>
+                    <?php endif; ?>
                 <?php endif; ?>
             </div>
         </div>
@@ -316,6 +368,7 @@ if ($_SESSION['role'] === 'Super Admin') {
         const orderCounts = <?php echo json_encode(array_column(array_reverse($monthlyOrders), 'order_count')); ?>;
         const staffNames = <?php echo json_encode(array_column($staffTemplates, 'staff_name')); ?>;
         const staffOrderCounts = <?php echo json_encode(array_column($staffTemplates, 'order_count')); ?>;
+
         // Chart.js Bar Graph for Monthly Orders
         new Chart(document.getElementById('monthlyOrdersChart'), {
             type: 'bar',
@@ -331,6 +384,13 @@ if ($_SESSION['role'] === 'Super Admin') {
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    }
+                },
                 scales: {
                     y: {
                         beginAtZero: true,
@@ -339,6 +399,7 @@ if ($_SESSION['role'] === 'Super Admin') {
                 }
             }
         });
+
         // Chart.js Bar Graph for Most Ordered Staff Templates
         new Chart(document.getElementById('staffTemplatesChart'), {
             type: 'bar',
@@ -354,10 +415,139 @@ if ($_SESSION['role'] === 'Super Admin') {
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    }
+                },
                 scales: {
                     y: {
                         beginAtZero: true,
                         ticks: { stepSize: 1 }
+                    }
+                }
+            }
+        });
+    </script>
+<?php endif; ?>
+
+<?php if ($_SESSION['role'] === 'Admin'): ?>
+    <script src="../assets/js/chart.umd.min.js"></script>
+    <script>
+        // Data for staff template statistics
+        const templateStaffNames = <?php echo json_encode(array_column($staffTemplateStats, 'staff_name')); ?>;
+        const templateCounts = <?php echo json_encode(array_column($staffTemplateStats, 'template_count')); ?>;
+
+        // Create bar chart for staff template statistics
+        new Chart(document.getElementById('staffTemplateChart'), {
+            type: 'bar',
+            data: {
+                labels: templateStaffNames,
+                datasets: [{
+                    label: 'Number of Templates Created',
+                    data: templateCounts,
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1,
+                    borderRadius: 4,
+                    barThickness: 40
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                layout: {
+                    padding: {
+                        left: 10,
+                        right: 10,
+                        top: 0,
+                        bottom: 15
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            boxWidth: 12,
+                            padding: 10,
+                            font: {
+                                size: 12,
+                                family: "'Poppins', sans-serif"
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            title: function (context) {
+                                return `Staff: ${context[0].label}`;
+                            },
+                            label: function (context) {
+                                return `Templates: ${context.raw}`;
+                            }
+                        },
+                        titleFont: {
+                            family: "'Poppins', sans-serif",
+                            size: 13
+                        },
+                        bodyFont: {
+                            family: "'Poppins', sans-serif",
+                            size: 12
+                        },
+                        padding: 12,
+                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                        titleColor: '#333',
+                        bodyColor: '#666',
+                        borderColor: '#ddd',
+                        borderWidth: 1
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1,
+                            font: {
+                                size: 12,
+                                family: "'Poppins', sans-serif"
+                            },
+                            padding: 5,
+                            color: '#666'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Number of Templates',
+                            font: {
+                                size: 13,
+                                family: "'Poppins', sans-serif",
+                                weight: '500'
+                            },
+                            padding: {
+                                top: 5,
+                                bottom: 5
+                            },
+                            color: '#333'
+                        },
+                        grid: {
+                            color: '#f0f0f0'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            font: {
+                                size: 11,
+                                family: "'Poppins', sans-serif"
+                            },
+                            padding: 8,
+                            color: '#666',
+                            maxRotation: 0,
+                            minRotation: 0
+                        },
+                        grid: {
+                            display: false
+                        }
                     }
                 }
             }

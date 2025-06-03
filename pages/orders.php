@@ -17,7 +17,7 @@ $sort_status = isset($_GET['sort_status']) ? trim($_GET['sort_status']) : '';
 
 // Build the query with search and sort conditions
 $query = "SELECT o.id as order_id, o.order_date, o.uid as user_id, u.name as user_name, 
-          GROUP_CONCAT(oi.template_name SEPARATOR ', ') as item_names, 
+          u.phone as user_phone, GROUP_CONCAT(oi.template_name SEPARATOR ', ') as item_names, 
           GROUP_CONCAT(oi.status) as item_statuses
           FROM `order` o
           JOIN order_item_line oi ON o.id = oi.oid
@@ -158,65 +158,108 @@ $paginated_orders = array_slice($orders, $start_index, $items_per_page);
         .modal {
             display: none;
             position: fixed;
-            top: 0;
+            z-index: 9999;
             left: 0;
+            top: 0;
             width: 100%;
             height: 100%;
             background-color: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
+        }
+
+        .modal.show {
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
         }
 
         .modal-content {
-            position: relative;
-            background-color: #fff;
-            margin: 10% auto;
-            padding: 30px;
-            width: 60%;
-            max-width: 600px;
+            background-color: #fefefe;
+            padding: 20px;
+            border: none;
+            width: 90%;
+            max-width: 500px;
             border-radius: 8px;
+            position: relative;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            animation: modalFadeIn 0.3s ease-out;
+            margin: 0;
+        }
+
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .close-modal {
             position: absolute;
-            right: 20px;
+            right: 15px;
             top: 15px;
             font-size: 24px;
-            cursor: pointer;
+            font-weight: bold;
             color: #666;
+            cursor: pointer;
+            transition: color 0.2s ease;
+            line-height: 1;
         }
 
         .close-modal:hover {
-            color: #333;
+            color: #000;
         }
 
-        .order-details {
+        .customer-details {
             margin-top: 20px;
         }
 
         .detail-row {
-            display: flex;
-            margin-bottom: 15px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #eee;
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            border: none;
         }
 
         .detail-label {
-            width: 150px;
-            font-weight: bold;
-            color: #555;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 3px;
+            font-size: 0.9rem;
         }
 
         .detail-value {
-            flex: 1;
-            color: #333;
+            width: 100%;
+            padding: 6px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-top: 2px;
+            font-size: 14px;
         }
 
-        @media (max-width: 768px) {
-            .modal-content {
-                width: 90%;
-                margin: 20% auto;
-            }
+        textarea.detail-value {
+            min-height: 60px;
+            resize: vertical;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .modal h2 {
+            margin: 0 0 20px 0;
+            color: #1f2937;
+            font-size: 1.5rem;
+            font-weight: 600;
         }
 
         .search-sort-container {
@@ -328,6 +371,70 @@ $paginated_orders = array_slice($orders, $start_index, $items_per_page);
                 justify-content: center;
             }
         }
+
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-secondary {
+            background-color: #95a5a6;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background-color: #7f8c8d;
+        }
+
+        .transaction-verification input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-top: 5px;
+            font-size: 14px;
+        }
+
+        #verificationMessage {
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 14px;
+            background-color: #f8f9fa;
+        }
+
+        .payment-type-selector {
+            margin-bottom: 15px !important;
+        }
+
+        .payment-type-selector label {
+            margin-bottom: 5px !important;
+        }
+
+        .transaction-verification p {
+            margin: 0 0 10px 0;
+            font-size: 0.9rem;
+            color: #4a5568;
+        }
+
+        #physicalPaymentFields .detail-row:last-child {
+            margin-bottom: 5px;
+        }
     </style>
 </head>
 
@@ -336,8 +443,83 @@ $paginated_orders = array_slice($orders, $start_index, $items_per_page);
     <div class="main-content">
         <?php include('../includes/inner_header.php'); ?>
         <div class="container">
-            <h2><?php echo $pageTitle; ?></h2>
+            <!-- <h2><?php echo $pageTitle; ?></h2> -->
             <div class="orders-container">
+                <!-- Customer Details Modal -->
+                <div id="customerModal" class="modal">
+                    <div class="modal-content">
+                        <span class="close-modal" onclick="closeModal('customerModal')">&times;</span>
+                        <h2>Customer Details</h2>
+                        <div class="customer-details">
+                            <div class="detail-row">
+                                <div class="detail-label">Customer Name:</div>
+                                <div class="detail-value" id="modalCustomerName"></div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Phone Number:</div>
+                                <div class="detail-value" id="modalCustomerPhone"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transaction Verification Modal -->
+                <div id="transactionModal" class="modal">
+                    <div class="modal-content">
+                        <span class="close-modal" onclick="closeModal('transactionModal')">&times;</span>
+                        <h2>Payment Verification</h2>
+                        <div class="transaction-verification">
+                            <div id="verificationMessage" style="display: none; margin-bottom: 15px;"></div>
+
+                            <div class="payment-type-selector" style="margin-bottom: 20px;">
+                                <label style="display: block; margin-bottom: 10px;">Select Payment Type:</label>
+                                <select id="paymentTypeSelect" class="form-control" onchange="togglePaymentFields()"
+                                    style="width: 100%; padding: 8px; margin-bottom: 15px;">
+                                    <option value="online">Online Payment (eSewa)</option>
+                                    <option value="physical">Physical Payment (Cash/Card)</option>
+                                </select>
+                            </div>
+
+                            <div id="onlinePaymentFields">
+                                <p>Please enter the transaction ID to verify the online payment.</p>
+                                <div class="detail-row">
+                                    <div class="detail-label">Transaction ID:</div>
+                                    <input type="text" id="transactionIdInput" class="detail-value"
+                                        placeholder="Enter transaction ID">
+                                </div>
+                            </div>
+
+                            <div id="physicalPaymentFields" style="display: none;">
+                                <p>Please enter the physical payment details.</p>
+                                <div class="detail-row">
+                                    <div class="detail-label">Amount Paid:</div>
+                                    <input type="number" id="physicalAmountInput" class="detail-value" step="0.01"
+                                        placeholder="Enter amount">
+                                </div>
+                                <div class="detail-row">
+                                    <div class="detail-label">Payment Method:</div>
+                                    <select id="physicalMethodInput" class="detail-value">
+                                        <option value="cash">Cash</option>
+                                        <option value="card">Card</option>
+                                    </select>
+                                </div>
+                                <div class="detail-row">
+                                    <div class="detail-label">Receipt/Reference Number:</div>
+                                    <input type="text" id="physicalReferenceInput" class="detail-value"
+                                        placeholder="Enter receipt/reference number">
+                                </div>
+                            </div>
+
+                            <div style="margin-top: 20px; text-align: right;">
+                                <button onclick="closeModal('transactionModal')" class="btn-secondary"
+                                    style="margin-right: 10px;">Cancel</button>
+                                <button onclick="handlePaymentVerification()" class="btn-primary">Verify &
+                                    Complete</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="search-sort-container">
                     <form action="" method="GET" class="search-form">
                         <div class="search-filters">
@@ -387,25 +569,34 @@ $paginated_orders = array_slice($orders, $start_index, $items_per_page);
                     </thead>
                     <tbody>
                         <?php foreach ($paginated_orders as $order): ?>
-                            <tr class="order-row" data-user-id="<?php echo htmlspecialchars($order['user_id']); ?>"
-                                data-user-name="<?php echo htmlspecialchars($order['user_name'] ?? 'Unknown User'); ?>">
+                            <tr class="order-row" data-user-id="<?= htmlspecialchars($order['user_id']); ?>"
+                                data-user-name="<?= htmlspecialchars($order['user_name'] ?? 'Unknown User'); ?>"
+                                data-user-phone="<?= htmlspecialchars($order['user_phone'] ?? 'Not provided'); ?>">
                                 <td class="order-id">#<?= $order['order_id'] ?></td>
                                 <td class="order-date">
                                     <?= htmlspecialchars(date('Y-m-d', strtotime($order['order_date']))) ?>
                                 </td>
                                 <td><?= htmlspecialchars($order['item_names']) ?></td>
-                                <td>
+                                <td onclick="event.stopPropagation();">
                                     <?php
                                     $statuses = array_unique(explode(',', $order['item_statuses']));
                                     $current_status = count($statuses) === 1 ? trim($statuses[0]) : 'mixed';
                                     ?>
-                                    <form method="post" action="update_order_status.php" style="margin:0;">
+                                    <form method="post" action="update_order_status.php" style="margin:0;"
+                                        id="statusForm_<?= $order['order_id'] ?>" onclick="event.stopPropagation();">
                                         <input type="hidden" name="order_id" value="<?= $order['order_id'] ?>">
-                                        <select name="status" class="status-dropdown" onchange="this.form.submit()">
-                                            <option value="pending" <?= $current_status === 'pending' ? 'selected' : ($current_status === 'mixed' ? '' : '') ?>>Pending</option>
-                                            <option value="ready" <?= $current_status === 'ready' ? 'selected' : ($current_status === 'mixed' ? '' : '') ?>>Ready</option>
-                                            <option value="completed" <?= $current_status === 'completed' ? 'selected' : ($current_status === 'mixed' ? '' : '') ?>>Completed</option>
-                                            <option value="cancelled" <?= $current_status === 'cancelled' ? 'selected' : ($current_status === 'mixed' ? '' : '') ?>>Cancelled</option>
+                                        <input type="hidden" name="status" value="">
+                                        <select name="status_select" class="status-dropdown"
+                                            onchange="handleStatusChange(this, <?= $order['order_id'] ?>)"
+                                            onclick="event.stopPropagation();">
+                                            <option value="pending" <?= $current_status === 'pending' ? 'selected' : '' ?>>
+                                                Pending</option>
+                                            <option value="ready" <?= $current_status === 'ready' ? 'selected' : '' ?>>Ready
+                                            </option>
+                                            <option value="completed" <?= $current_status === 'completed' ? 'selected' : '' ?>>
+                                                Completed</option>
+                                            <option value="cancelled" <?= $current_status === 'cancelled' ? 'selected' : '' ?>>
+                                                Cancelled</option>
                                         </select>
                                     </form>
                                 </td>
@@ -449,60 +640,285 @@ $paginated_orders = array_slice($orders, $start_index, $items_per_page);
     </div>
     <?php include('../includes/footer.php'); ?>
 
-    <!-- Add this modal HTML before the closing body tag -->
-    <div id="orderModal" class="modal">
-        <div class="modal-content">
-            <span class="close-modal">&times;</span>
-            <h2>Order Details</h2>
-            <div class="order-details">
-                <div class="detail-row">
-                    <div class="detail-label">User ID:</div>
-                    <div class="detail-value" id="modalUserId"></div>
-                </div>
-                <div class="detail-row">
-                    <div class="detail-label">User Name:</div>
-                    <div class="detail-value" id="modalUserName"></div>
-                </div>
-                <!-- Add more details as needed -->
-            </div>
-        </div>
-    </div>
-
     <script>
-        // Add this to your existing JavaScript
-        document.addEventListener('DOMContentLoaded', function () {
-            const modal = document.getElementById('orderModal');
-            const closeBtn = document.querySelector('.close-modal');
-            const orderRows = document.querySelectorAll('.order-row');
+        let currentForm = null;
+        let currentSelectedStatus = null;
 
-            // Function to show modal with order details
-            function showOrderDetails(userId, userName) {
-                document.getElementById('modalUserId').textContent = userId;
-                document.getElementById('modalUserName').textContent = userName;
-                modal.style.display = 'block';
+        function handleStatusChange(selectElement, orderId) {
+            // Store the previous value before any change
+            const previousValue = selectElement.getAttribute('data-previous-value') || selectElement.value;
+            selectElement.setAttribute('data-previous-value', previousValue);
+
+            if (selectElement.value === 'completed') {
+                // Prevent the change until verification
+                selectElement.value = previousValue;
+
+                // Store the current form and selected status
+                currentForm = document.getElementById('statusForm_' + orderId);
+                currentSelectedStatus = selectElement;
+
+                // Reset the verification message and input
+                const messageDiv = document.getElementById('verificationMessage');
+                if (messageDiv) {
+                    messageDiv.style.display = 'none';
+                    messageDiv.innerHTML = '';
+                }
+
+                document.getElementById('transactionIdInput').value = '';
+
+                // Reset physical payment fields
+                if (document.getElementById('physicalAmountInput')) {
+                    document.getElementById('physicalAmountInput').value = '';
+                    document.getElementById('physicalReferenceInput').value = '';
+                    document.getElementById('physicalMethodInput').value = 'cash';
+                }
+
+                // Show the transaction verification modal
+                document.getElementById('transactionModal').classList.add('show');
+                document.getElementById('transactionModal').style.display = 'flex';
+
+                // Set default payment type to online
+                if (document.getElementById('paymentTypeSelect')) {
+                    document.getElementById('paymentTypeSelect').value = 'online';
+                    togglePaymentFields();
+                }
+
+                // Prevent the form from submitting
+                return false;
+            } else {
+                // For other statuses, update hidden input and submit the form
+                const form = document.getElementById('statusForm_' + orderId);
+                form.querySelector('input[name="status"]').value = selectElement.value;
+                form.submit();
+            }
+        }
+
+        function togglePaymentFields() {
+            const paymentType = document.getElementById('paymentTypeSelect').value;
+            const onlineFields = document.getElementById('onlinePaymentFields');
+            const physicalFields = document.getElementById('physicalPaymentFields');
+
+            if (paymentType === 'online') {
+                onlineFields.style.display = 'block';
+                physicalFields.style.display = 'none';
+            } else {
+                onlineFields.style.display = 'none';
+                physicalFields.style.display = 'block';
+            }
+        }
+
+        function handlePaymentVerification() {
+            const paymentType = document.getElementById('paymentTypeSelect').value;
+
+            if (paymentType === 'online') {
+                verifyTransaction();
+            } else {
+                verifyPhysicalPayment();
+            }
+        }
+
+        function verifyTransaction() {
+            const transactionId = document.getElementById('transactionIdInput').value.trim();
+            const orderId = currentForm.querySelector('input[name="order_id"]').value;
+            const messageDiv = document.getElementById('verificationMessage');
+
+            if (!transactionId) {
+                messageDiv.innerHTML = 'Please enter a transaction ID';
+                messageDiv.style.color = '#dc3545';
+                messageDiv.style.display = 'block';
+                return;
             }
 
-            // Add click event to each order row
-            orderRows.forEach(row => {
+            messageDiv.innerHTML = 'Verifying transaction...';
+            messageDiv.style.color = '#0d6efd';
+            messageDiv.style.display = 'block';
+
+            // Send verification request to the server
+            fetch('verify_transaction.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    orderId: orderId,
+                    transactionId: transactionId
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Show success message
+                        messageDiv.innerHTML = 'Transaction verified successfully!';
+                        messageDiv.style.color = '#198754';
+                        messageDiv.style.display = 'block';
+
+                        // Update the status dropdown and hidden input
+                        if (currentSelectedStatus) {
+                            currentSelectedStatus.value = 'completed';
+                        }
+                        currentForm.querySelector('input[name="status"]').value = 'completed';
+
+                        // Wait a moment to show the success message before submitting
+                        setTimeout(() => {
+                            currentForm.submit();
+                            closeModal('transactionModal');
+                        }, 1000);
+                    } else {
+                        // Show error message
+                        messageDiv.innerHTML = data.message || 'Invalid transaction ID';
+                        messageDiv.style.color = '#dc3545';
+                        messageDiv.style.display = 'block';
+                        // Reset the status dropdown
+                        if (currentSelectedStatus) {
+                            currentSelectedStatus.value = currentSelectedStatus.getAttribute('data-previous-value') || 'ready';
+                        }
+                    }
+                })
+                .catch(error => {
+                    messageDiv.innerHTML = 'An error occurred during verification';
+                    messageDiv.style.color = '#dc3545';
+                    messageDiv.style.display = 'block';
+                    console.error('Error:', error);
+                    // Reset the status dropdown
+                    if (currentSelectedStatus) {
+                        currentSelectedStatus.value = currentSelectedStatus.getAttribute('data-previous-value') || 'ready';
+                    }
+                });
+        }
+
+        function verifyPhysicalPayment() {
+            const amount = parseFloat(document.getElementById('physicalAmountInput').value);
+            const method = document.getElementById('physicalMethodInput').value;
+            const reference = document.getElementById('physicalReferenceInput').value;
+            const orderId = currentForm.querySelector('input[name="order_id"]').value;
+            const messageDiv = document.getElementById('verificationMessage');
+
+            if (!amount || amount <= 0) {
+                messageDiv.innerHTML = 'Please enter a valid payment amount';
+                messageDiv.style.color = '#dc3545';
+                messageDiv.style.display = 'block';
+                return;
+            }
+
+            if (!reference) {
+                messageDiv.innerHTML = 'Please enter a receipt/reference number';
+                messageDiv.style.color = '#dc3545';
+                messageDiv.style.display = 'block';
+                return;
+            }
+
+            messageDiv.innerHTML = 'Verifying payment...';
+            messageDiv.style.color = '#0d6efd';
+            messageDiv.style.display = 'block';
+
+            // Send verification request to the server
+            fetch('verify_physical_payment.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    orderId: orderId,
+                    amount: amount,
+                    method: method,
+                    reference: reference
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Show success message
+                        messageDiv.innerHTML = 'Payment verified successfully!';
+                        messageDiv.style.color = '#198754';
+                        messageDiv.style.display = 'block';
+
+                        // Update the status dropdown and hidden input
+                        if (currentSelectedStatus) {
+                            currentSelectedStatus.value = 'completed';
+                        }
+                        currentForm.querySelector('input[name="status"]').value = 'completed';
+
+                        // Wait a moment to show the success message before submitting
+                        setTimeout(() => {
+                            currentForm.submit();
+                            closeModal('transactionModal');
+                        }, 1000);
+                    } else {
+                        messageDiv.innerHTML = data.message || 'Error processing physical payment';
+                        messageDiv.style.color = '#dc3545';
+                        messageDiv.style.display = 'block';
+                        // Reset the status dropdown
+                        if (currentSelectedStatus) {
+                            currentSelectedStatus.value = currentSelectedStatus.getAttribute('data-previous-value') || 'ready';
+                        }
+                    }
+                })
+                .catch(error => {
+                    messageDiv.innerHTML = 'An error occurred during verification';
+                    messageDiv.style.color = '#dc3545';
+                    messageDiv.style.display = 'block';
+                    console.error('Error:', error);
+                    // Reset the status dropdown
+                    if (currentSelectedStatus) {
+                        currentSelectedStatus.value = currentSelectedStatus.getAttribute('data-previous-value') || 'ready';
+                    }
+                });
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.remove('show');
+                modal.style.display = 'none';
+            }
+        }
+
+        // Store the previous value when the dropdown is clicked
+        document.querySelectorAll('.status-dropdown').forEach(dropdown => {
+            dropdown.addEventListener('click', function () {
+                this.setAttribute('data-previous-value', this.value);
+            });
+        });
+
+        // Close modal when clicking outside
+        window.onclick = function (event) {
+            if (event.target.classList.contains('modal')) {
+                closeModal(event.target.id);
+            }
+        }
+
+        // Close modal on escape key
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                document.querySelectorAll('.modal').forEach(modal => {
+                    closeModal(modal.id);
+                });
+            }
+        });
+
+        // Add click handlers to table rows after DOM is loaded
+        document.addEventListener('DOMContentLoaded', function () {
+            const rows = document.querySelectorAll('.order-row');
+            rows.forEach(row => {
                 row.addEventListener('click', function () {
                     const userId = this.getAttribute('data-user-id');
                     const userName = this.getAttribute('data-user-name');
-                    showOrderDetails(userId, userName);
+                    const userPhone = this.getAttribute('data-user-phone');
+                    if (userId && userName) {
+                        showCustomerDetails(userId, userName, userPhone);
+                    }
                 });
             });
-
-            // Close modal when clicking the close button
-            closeBtn.addEventListener('click', function () {
-                modal.style.display = 'none';
-            });
-
-            // Close modal when clicking outside
-            window.addEventListener('click', function (event) {
-                if (event.target === modal) {
-                    modal.style.display = 'none';
-                }
-            });
         });
+
+        function showCustomerDetails(userId, userName, userPhone) {
+            document.getElementById('modalCustomerName').textContent = userName || 'Unknown User';
+            document.getElementById('modalCustomerPhone').textContent = userPhone || 'Not provided';
+
+            const modal = document.getElementById('customerModal');
+            modal.classList.add('show');
+            modal.style.display = 'flex';
+        }
     </script>
 </body>
 

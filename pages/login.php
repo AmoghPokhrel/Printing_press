@@ -30,11 +30,15 @@
           <input type="hidden" name="category_id" value="<?php echo htmlspecialchars($_GET['category_id']); ?>">
         <?php endif; ?>
 
-        <label for="email">Email</label>
-        <input type="email" id="email" name="email" placeholder="Email" required>
+        <div class="input-wrapper">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" placeholder="Email" required>
+        </div>
 
-        <label for="password">Password</label>
-        <input type="password" id="password" name="password" placeholder="Password" required>
+        <div class="input-wrapper">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" placeholder="Password" required>
+        </div>
 
         <button type="submit">Login</button>
         <a href="../forgot_password.php" class="forgot-password">Forgotten Password?</a>

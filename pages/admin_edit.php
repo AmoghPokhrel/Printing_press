@@ -71,8 +71,7 @@ $user = mysqli_fetch_assoc($result);
                 <input type="text" name="address" value="<?php echo htmlspecialchars($user['address']); ?>" required>
 
                 <label for="dob">Date of Birth:</label>
-                <input type="date" name="dob"
-                    value="<?php echo !empty($user['dob']) ? date('Y-m-d', strtotime($user['dob'])) : ''; ?>" required>
+                <input type="date" name="DOB" value="<?php echo !empty($user['DOB']) ? $user['DOB'] : ''; ?>" required>
 
                 <label for="gender">Gender:</label>
                 <select name="gender" required>

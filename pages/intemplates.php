@@ -113,6 +113,11 @@ if ($category_filter !== 'all') {
     $pageTitle = 'Templates - ' . htmlspecialchars($current_category_name);
 }
 
+// Only show active templates to customers
+if ($user_role === 'Customer') {
+    $query .= ($category_filter !== 'all' ? " AND" : " WHERE") . " t.status = 'active'";
+}
+
 $result = $conn->query($query);
 
 if ($result && $result->num_rows > 0) {
@@ -136,6 +141,8 @@ $paginated_templates = array_slice($templates, $start, $per_page);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $pageTitle; ?></title>
     <link rel="stylesheet" href="../assets/css/registers.css">
+    <!-- Add Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         /* Success message styling */
         .alert-success {
@@ -180,8 +187,9 @@ $paginated_templates = array_slice($templates, $start, $per_page);
             display: flex;
             flex-wrap: wrap;
             gap: 20px;
-            padding: 20px;
+            padding: 0 20px;
             justify-content: flex-start;
+            margin-bottom: 40px;
         }
 
         .template-card {
@@ -269,91 +277,182 @@ $paginated_templates = array_slice($templates, $start, $per_page);
             color: white;
         }
 
-        /* Modal Styles */
+        /* Modal centering and styling */
         .modal {
             display: none;
             position: fixed;
-            z-index: 1000;
-            left: 0;
             top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+        }
+
+        .modal.fade.show {
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-dialog {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            top: 50%;
+            transform: translateY(-50%) !important;
         }
 
         .modal-content {
-            background-color: #fefefe;
-            margin: 5% auto;
-            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            border: none;
+            position: relative;
+            margin: 1rem;
+            width: 100%;
+        }
+
+        .modal-header {
+            border-bottom: 1px solid #dee2e6;
+            padding: 1rem 1.5rem;
+            background: #f8f9fa;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+            max-height: calc(100vh - 210px);
+            overflow-y: auto;
+        }
+
+        .modal-footer {
+            border-top: 1px solid #dee2e6;
+            padding: 1rem 1.5rem;
+            background: #f8f9fa;
+            border-radius: 0 0 12px 12px;
+        }
+
+        #modalTemplateImage {
+            width: 100%;
+            max-height: 300px;
+            object-fit: contain;
             border-radius: 8px;
-            width: 60%;
-            max-width: 600px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            margin-bottom: 1.5rem;
         }
 
-        .close {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .close:hover {
-            color: black;
-        }
-
-        .detail-row {
-            display: flex;
-            margin-bottom: 10px;
-            padding: 8px 0;
+        .row.mb-2 {
+            margin-bottom: 1rem !important;
+            padding: 0.5rem 0;
             border-bottom: 1px solid #eee;
         }
 
-        .detail-label {
-            font-weight: bold;
-            width: 150px;
-            color: #555;
+        .row.mb-2:last-child {
+            border-bottom: none;
         }
 
-        .detail-value {
-            flex: 1;
+        .col-4.fw-bold {
+            color: #495057;
         }
 
-        .modal-image {
-            max-width: 100%;
-            max-height: 300px;
-            display: block;
-            margin: 0 auto 20px;
+        .col-8 {
+            color: #2c3e50;
+        }
+
+        @media (max-width: 768px) {
+            .modal-dialog {
+                margin: 0.5rem;
+            }
+        }
+
+        /* Add these new styles */
+        .status-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        .status-active {
+            background-color: #10b981;
+        }
+
+        .status-inactive {
+            background-color: #ef4444;
+        }
+
+        .toggle-btn {
+            padding: 6px 12px;
             border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .toggle-btn.active {
+            background-color: #ef4444;
+            color: white;
+            border: none;
+        }
+
+        .toggle-btn.inactive {
+            background-color: #10b981;
+            color: white;
+            border: none;
+        }
+
+        .status-text {
+            font-weight: 500;
+            color: #374151;
+        }
+
+        /* Add this new style for main content spacing */
+        .main-content {
+            min-height: calc(100vh - 200px);
+            /* Adjust based on your footer height */
+            padding-bottom: 60px;
+            /* Add padding at the bottom */
+        }
+
+        .container h2 {
+            margin: 20px 0 0 0;
+            padding: 0 20px;
         }
 
         .filter-indicator {
-            font-size: 14px;
-            color: #666;
-            margin-left: 10px;
-            font-weight: normal;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.1rem;
+            color: #4a5568;
+            background: #f7fafc;
+            padding: 8px 16px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0 0 15px 0;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         }
 
-        .btn-info {
-            background-color: #3498db;
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: 500;
-            font-size: 14px;
-            transition: all 0.2s ease;
+        .filter-indicator i {
+            color: #3182ce;
+            font-size: 0.9rem;
         }
 
-        .btn-info:hover {
-            background-color: #217dbb;
-        }
-
-        .container {
-            padding-bottom: 80px !important;
-            /* Ensures pagination is visible above the fixed footer */
+        @media (max-width: 768px) {
+            .filter-indicator {
+                font-size: 0.95rem;
+                padding: 6px 12px;
+            }
         }
     </style>
 </head>
@@ -378,17 +477,18 @@ $paginated_templates = array_slice($templates, $start, $per_page);
         <?php include('../includes/inner_header.php'); ?>
 
         <div class="container">
-            <h2><?php echo $pageTitle; ?>
+            <h2>
                 <?php if ($category_filter !== 'all'): ?>
-                    <span class="filter-indicator">
-                        (Filtered by: <?php
+                    <div class="filter-indicator">
+                        <i class="fas fa-filter"></i>
+                        Filtered by: <?php
                         $current_category = array_filter($categories, function ($cat) use ($category_filter) {
                             return $cat['c_id'] == $category_filter;
                         });
                         $current_category_name = current($current_category)['c_Name'] ?? 'Unknown Category';
                         echo htmlspecialchars($current_category_name);
-                        ?>)
-                    </span>
+                        ?>
+                    </div>
                 <?php endif; ?>
             </h2>
 
@@ -408,7 +508,7 @@ $paginated_templates = array_slice($templates, $start, $per_page);
 
                             <div class="template-info">
                                 <div class="template-name"><?php echo htmlspecialchars($template['name']); ?></div>
-                                <div class="template-price">Rs<?php echo number_format($template['cost'], 2); ?></div>
+                                <div class="template-price">Rs <?php echo number_format($template['cost'], 2); ?></div>
                                 <div class="template-color-scheme">Color Scheme:
                                     <?php echo htmlspecialchars($template['color_scheme'] ?? 'N/A'); ?>
                                 </div>
@@ -427,7 +527,7 @@ $paginated_templates = array_slice($templates, $start, $per_page);
                                             </button>
                                         <?php endif; ?>
                                     </form>
-                                    <button class="btn btn-details" onclick="showTemplateDetails(
+                                    <button type="button" class="btn btn-details" onclick="showTemplateDetails(
                                                 '<?php echo htmlspecialchars($template['name'], ENT_QUOTES); ?>',
                                                 '<?php echo htmlspecialchars($template['cost']); ?>',
                                                 '<?php echo htmlspecialchars($template['category_name'], ENT_QUOTES); ?>',
@@ -435,10 +535,10 @@ $paginated_templates = array_slice($templates, $start, $per_page);
                                                 '<?php echo htmlspecialchars($template['staff_name'], ENT_QUOTES); ?>',
                                                 '<?php echo htmlspecialchars($template['created_at']); ?>',
                                                 '<?php echo !empty($template['image_path']) ? '../uploads/templates/' . htmlspecialchars($template['image_path']) : 'https://via.placeholder.com/600x400?text=No+Image'; ?>',
-                                                '<?php echo htmlspecialchars($template['color_scheme'] ?? 'N/A', ENT_QUOTES); ?>'
-                                            )">
-                                        Details
-                                    </button>
+                                        '<?php echo htmlspecialchars($template['color_scheme'] ?? 'N/A', ENT_QUOTES); ?>',
+                                        '<?php echo htmlspecialchars($template['status'], ENT_QUOTES); ?>',
+                                        '<?php echo $template['id']; ?>'
+                                    )">Details</button>
                                 </div>
                             </div>
                         </div>
@@ -449,9 +549,73 @@ $paginated_templates = array_slice($templates, $start, $per_page);
                     </div>
                 <?php endif; ?>
             </div>
+
+            <!-- Bootstrap Modal -->
+            <div class="modal fade" id="templateModal" tabindex="-1" aria-labelledby="templateModalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="templateModalLabel">Template Details</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <img id="modalTemplateImage" src="" alt="Template Image" class="img-fluid">
+                            <div class="row mb-2">
+                                <div class="col-4 fw-bold">Template Name:</div>
+                                <div class="col-8" id="modalTemplateName"></div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-4 fw-bold">Category:</div>
+                                <div class="col-8" id="modalTemplateCategory"></div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-4 fw-bold">Cost:</div>
+                                <div class="col-8" id="modalTemplatePrice"></div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-4 fw-bold">Media Type:</div>
+                                <div class="col-8" id="modalTemplateMediaType"></div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-4 fw-bold">Created By:</div>
+                                <div class="col-8" id="modalTemplateStaff"></div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-4 fw-bold">Created Date:</div>
+                                <div class="col-8" id="modalTemplateCreatedAt"></div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-4 fw-bold">Color Scheme:</div>
+                                <div class="col-8" id="modalTemplateColorScheme"></div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-4 fw-bold">Status:</div>
+                                <div class="col-8" id="modalTemplateStatus">
+                                    <?php if ($user_role === 'Admin' || $user_role === 'Super Admin'): ?>
+                                        <div class="status-toggle">
+                                            <span>
+                                                <span class="status-indicator" id="statusIndicator"></span>
+                                                <span class="status-text" id="statusText"></span>
+                                            </span>
+                                            <button type="button" class="toggle-btn" id="toggleStatus"
+                                                onclick="toggleTemplateStatus(this)">
+                                                Toggle Status
+                                            </button>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <?php if ($total_pages > 1): ?>
-                <div
-                    style="text-align:center; margin: 20px 0; padding-bottom: 40px; background: #f9f9f9; border: 1px solid #eee;">
+                <div class="pagination-container">
                     <?php if ($page > 1): ?>
                         <a href="?page=<?php echo $page - 1; ?>" class="btn btn-info">Previous</a>
                     <?php endif; ?>
@@ -464,58 +628,70 @@ $paginated_templates = array_slice($templates, $start, $per_page);
         </div>
     </div>
 
-    <!-- Modal for Template Details -->
-    <div id="templateModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <img id="modalTemplateImage" src="" alt="Template Image" class="modal-image">
-
-            <div class="detail-row">
-                <div class="detail-label">Template Name:</div>
-                <div class="detail-value" id="modalTemplateName"></div>
-            </div>
-
-            <div class="detail-row">
-                <div class="detail-label">Category:</div>
-                <div class="detail-value" id="modalTemplateCategory"></div>
-            </div>
-
-            <div class="detail-row">
-                <div class="detail-label">Cost:</div>
-                <div class="detail-value" id="modalTemplatePrice"></div>
-            </div>
-
-            <div class="detail-row">
-                <div class="detail-label">Media Type:</div>
-                <div class="detail-value" id="modalTemplateMediaType"></div>
-            </div>
-
-            <div class="detail-row">
-                <div class="detail-label">Created By:</div>
-                <div class="detail-value" id="modalTemplateStaff"></div>
-            </div>
-
-            <div class="detail-row">
-                <div class="detail-label">Created Date:</div>
-                <div class="detail-value" id="modalTemplateCreatedAt"></div>
-            </div>
-
-            <div class="detail-row">
-                <div class="detail-label">Color Scheme:</div>
-                <div class="detail-value" id="modalTemplateColorScheme"></div>
-            </div>
-        </div>
-    </div>
-
     <?php include('../includes/footer.php'); ?>
 
-    <script>
-        // Get the modal element
-        const modal = document.getElementById('templateModal');
-        const span = document.getElementsByClassName('close')[0];
+    <!-- Add Bootstrap JS and its dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.min.js"></script>
 
-        // Function to show template details in modal
-        function showTemplateDetails(name, cost, category, mediaType, staff, createdAt, imagePath, colorScheme) {
+    <script>
+        let templateModal;
+        let currentTemplateId;
+
+        document.addEventListener('DOMContentLoaded', function () {
+            templateModal = new bootstrap.Modal(document.getElementById('templateModal'), {
+                backdrop: 'static',
+                keyboard: true
+            });
+        });
+
+        function updateStatusUI(status) {
+            const indicator = document.getElementById('statusIndicator');
+            const text = document.getElementById('statusText');
+            const toggleBtn = document.getElementById('toggleStatus');
+
+            if (status === 'active') {
+                indicator.className = 'status-indicator status-active';
+                text.textContent = 'Active';
+                toggleBtn.textContent = 'Deactivate';
+                toggleBtn.className = 'toggle-btn active';
+            } else {
+                indicator.className = 'status-indicator status-inactive';
+                text.textContent = 'Inactive';
+                toggleBtn.textContent = 'Activate';
+                toggleBtn.className = 'toggle-btn inactive';
+            }
+        }
+
+        function toggleTemplateStatus(button) {
+            if (!currentTemplateId) return;
+
+            // Send AJAX request to update status
+            fetch('ajax/update_template_status.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'template_id=' + currentTemplateId
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        updateStatusUI(data.new_status);
+                    } else {
+                        alert('Failed to update status: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to update status. Please try again.');
+                });
+        }
+
+        function showTemplateDetails(name, cost, category, mediaType, staff, createdAt, imagePath, colorScheme, status, templateId) {
+            currentTemplateId = templateId;
+
+            // Set the content
             document.getElementById('modalTemplateName').textContent = name;
             document.getElementById('modalTemplateCategory').textContent = category;
             document.getElementById('modalTemplatePrice').textContent = 'Rs' + parseFloat(cost).toFixed(2);
@@ -523,22 +699,15 @@ $paginated_templates = array_slice($templates, $start, $per_page);
             document.getElementById('modalTemplateStaff').textContent = staff;
             document.getElementById('modalTemplateCreatedAt').textContent = createdAt;
             document.getElementById('modalTemplateColorScheme').textContent = colorScheme;
-            const imgElement = document.getElementById('modalTemplateImage');
-            imgElement.src = imagePath;
-            imgElement.alt = name;
-            modal.style.display = 'block';
-        }
+            document.getElementById('modalTemplateImage').src = imagePath;
 
-        // Close the modal when clicking the X
-        span.onclick = function () {
-            modal.style.display = 'none';
-        }
+            // Update status UI if admin/super admin
+            <?php if ($user_role === 'Admin' || $user_role === 'Super Admin'): ?>
+                updateStatusUI(status);
+            <?php endif; ?>
 
-        // Close the modal when clicking outside of it
-        window.onclick = function (event) {
-            if (event.target == modal) {
-                modal.style.display = 'none';
-            }
+            // Show the modal
+            templateModal.show();
         }
     </script>
 </body>

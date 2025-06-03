@@ -60,6 +60,54 @@ if (isset($_GET['id'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Professional Details</title>
     <link rel="stylesheet" href="../assets/css/professional_details.css">
+    <style>
+        .main-content {
+            min-height: calc(100vh - 60px);
+            padding-bottom: 60px;
+            position: relative;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto 60px;
+            padding: 20px;
+        }
+
+        .back-button {
+            width: 100%;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 20px;
+            text-align: left;
+        }
+
+        .back-button .btn-primary {
+            padding: 8px 20px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            background-color: #2ecc71;
+            color: white;
+            text-decoration: none;
+        }
+
+        .back-button .btn-primary:hover {
+            transform: translateX(-4px);
+            background-color: #27ae60;
+        }
+
+        .designer-table {
+            margin-bottom: 40px;
+        }
+
+        /* Ensure the footer stays at the bottom */
+        footer {
+            margin-top: auto;
+        }
+    </style>
 </head>
 
 <body>
@@ -69,7 +117,7 @@ if (isset($_GET['id'])) {
         <?php include('../includes/inner_header.php'); ?>
 
         <div class="back-button">
-            <a href="../pages/staff_setup.php" class="btn-primary">Back</a>
+            <a href="../pages/staff_setup.php" class="btn-primary">← Back</a>
         </div>
 
         <div class="container">

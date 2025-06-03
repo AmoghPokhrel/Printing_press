@@ -31,28 +31,37 @@ if (!$order) {
     exit();
 }
 
-// Get order items from order_item_line (no joins needed)
+// Get order items from order_item_line with all necessary joins
 $items_query = "SELECT 
-                oil.id as order_item_id,
-                oil.quantity,
-                oil.unit_price as price,
-                oil.total_price,
-                oil.template_name,
-                oil.template_image,
-                oil.custom_notes,
-                cil.req_type,
-                cil.final_design
-                FROM order_item_line oil
-                LEFT JOIN cart_item_line cil ON oil.ca_it_id = cil.id
-                WHERE oil.oid = ?";
+    oil.*,
+    oil.unit_price as price,
+    cil.req_type,
+    t.name AS template_name,
+    t.image_path AS template_image,
+    tm.final_design as modification_final_design,
+    ctr.final_design as custom_final_design
+    FROM order_item_line oil
+    LEFT JOIN cart_item_line cil ON oil.ca_it_id = cil.id
+    LEFT JOIN templates t ON cil.template_id = t.id
+    LEFT JOIN template_modifications tm ON cil.request_id = tm.id
+    LEFT JOIN custom_template_requests ctr ON cil.custom_request_id = ctr.id
+    WHERE oil.oid = ?";
+
+// Debug the query
+error_log("Order confirmation query: " . $items_query);
+
 $stmt = $conn->prepare($items_query);
 $stmt->bind_param('i', $order_id);
 $stmt->execute();
 $items = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
+// Debug the results
+error_log("Order items data: " . print_r($items, true));
+
 $total = 0;
 foreach ($items as $item) {
-    $total += $item['price'] * $item['quantity'];
+    // Calculate total using unit_price instead of price
+    $total += $item['unit_price'] * $item['quantity'];
 }
 
 $pageTitle = 'Order Confirmation';
@@ -279,28 +288,37 @@ $pageTitle = 'Order Confirmation';
                             $image = '';
                             if (!empty($item['req_type'])) {
                                 if ($item['req_type'] === 'modify') {
-                                    $image = '/printing_press/uploads/template_designs/' . $item['final_design'];
+                                    $image = '../uploads/template_designs/' . $item['modification_final_design'];
+                                    error_log("Order confirmation - Modified template image path: " . $image);
                                 } elseif ($item['req_type'] === 'custom') {
-                                    $image = '/printing_press/uploads/custom_templates/' . $item['final_design'];
+                                    $image = '../uploads/custom_templates/' . $item['custom_final_design'];
+                                    error_log("Order confirmation - Custom template image path: " . $image);
                                 }
                             } else {
-                                // Fallback logic if req_type is missing
                                 if (!empty($item['template_image'])) {
-                                    $image = '/printing_press/uploads/template_images/' . $item['template_image'];
+                                    $image = '../uploads/template_images/' . $item['template_image'];
+                                    error_log("Order confirmation - Regular template image path: " . $image);
                                 }
                             }
+                            error_log("Order confirmation - Final image path: " . $image);
+                            error_log("Order confirmation - Item data: " . print_r($item, true));
 
                             if (!empty($image)) {
-                                echo '<img src="' . htmlspecialchars($image) . '" alt="' . htmlspecialchars($item['template_name']) . '">';
+                                echo '<img src="' . htmlspecialchars($image) . '" alt="' . htmlspecialchars($item['template_name']) . '" 
+                                    onerror="this.src=\'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjZWVlIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtc2l6ZT0iMTIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGFsaWdubWVudC1iYXNlbGluZT0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwsSGVsdmV0aWNhLHNhbnMtc2VyaWYiIGZpbGw9IiNhYWEiPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==\'">';
                             } else {
-                                echo '<div class="no-image-placeholder"><i class="fas fa-image"></i></div>';
+                                echo '<div class="no-image-placeholder">
+                                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjZWVlIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtc2l6ZT0iMTIiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGFsaWdubWVudC1iYXNlbGluZT0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwsSGVsdmV0aWNhLHNhbnMtc2VyaWYiIGZpbGw9IiNhYWEiPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==" alt="No Image Available" style="width:80px;height:80px;object-fit:cover;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,0.1);margin-right:1rem;">
+                                </div>';
                             }
                             ?>
                             <div class="order-item-details">
                                 <h4><?php echo htmlspecialchars($item['template_name'] ?? 'Custom Design'); ?></h4>
                                 <p><strong>Quantity:</strong> <?php echo $item['quantity']; ?></p>
-                                <p><strong>Unit Price:</strong> Rs <?php echo number_format($item['price'], 2); ?></p>
-                                <p><strong>Total Price:</strong> Rs <?php echo number_format($item['total_price'], 2); ?></p>
+                                <p><strong>Unit Price:</strong> Rs <?php echo number_format($item['unit_price'], 2); ?></p>
+                                <p><strong>Total Price:</strong> Rs
+                                    <?php echo number_format($item['unit_price'] * $item['quantity'], 2); ?>
+                                </p>
                             </div>
                         </div>
                     <?php endforeach; ?>

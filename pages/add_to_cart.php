@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $success = false;
     $message = '';
 
-    // First, check if user has a cart, if not create one
+
     $check_cart_query = "SELECT id FROM cart WHERE uid = ?";
     $stmt = $conn->prepare($check_cart_query);
     $stmt->bind_param("i", $user_id);
@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $cart_result = $stmt->get_result();
 
     if ($cart_result->num_rows === 0) {
-        // Create new cart for user
+
         $create_cart_query = "INSERT INTO cart (uid) VALUES (?)";
         $stmt = $conn->prepare($create_cart_query);
         $stmt->bind_param("i", $user_id);
@@ -42,8 +42,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $template_id = intval($_POST['template_id']);
         $request_id = isset($_POST['request_id']) ? intval($_POST['request_id']) : null;
         $unique_id = isset($_POST['unique_id']) ? $_POST['unique_id'] : uniqid('template_', true);
-
-        // Get the template price from the database
         $template_price = 0;
         $price_query = "SELECT cost FROM templates WHERE id = ?";
         $price_stmt = $conn->prepare($price_query);
@@ -54,8 +52,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $template_price = floatval($price_row['cost']);
         }
         $price_stmt->close();
-
-        // Fetch the final design filename for this modification
         $final_design = null;
         $final_design_query = "SELECT final_design FROM template_modifications WHERE id = ?";
         $fd_stmt = $conn->prepare($final_design_query);
@@ -68,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $fd_stmt->close();
         $req_type = 'modify';
 
-        // Check if an item with the same request_id already exists in the cart_item_line
+
         if ($request_id) {
             $check_query = "SELECT id, quantity FROM cart_item_line WHERE cart_id = ? AND request_id = ? AND status = 'active'";
             $stmt = $conn->prepare($check_query);
@@ -77,8 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $result = $stmt->get_result();
 
             if ($result->num_rows > 0) {
-                // Item exists and is active, update quantity, price, and final_design
-                $existing_item = $result->fetch_assoc();
+                // Item exists and is active, update quantity, price, and final_design                $existing_item = $result->fetch_assoc();
                 $new_quantity = $existing_item['quantity'] + $quantity;
 
                 $update_query = "UPDATE cart_item_line SET quantity = ?, price = ?, final_design = ?, req_type = ? WHERE id = ?";
@@ -87,7 +82,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $success = $stmt->execute();
                 $message = $success ? 'Cart quantity updated!' : 'Error updating cart quantity.';
             } else {
-                // Item doesn't exist or is completed, insert as new item
                 $insert_query = "INSERT INTO cart_item_line (cart_id, template_id, request_id, unique_id, quantity, price, final_design, req_type, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active')";
                 $stmt = $conn->prepare($insert_query);
                 $stmt->bind_param("iiisidss", $cart_id, $template_id, $request_id, $unique_id, $quantity, $template_price, $final_design, $req_type);
@@ -95,7 +89,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $message = $success ? 'Template added to cart!' : 'Error adding template to cart.';
             }
         } else {
-            // No request_id, insert as new item (no final_design)
             $insert_query = "INSERT INTO cart_item_line (cart_id, template_id, request_id, unique_id, quantity, price, req_type, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'active')";
             $stmt = $conn->prepare($insert_query);
             $stmt->bind_param("iiisidss", $cart_id, $template_id, $request_id, $unique_id, $quantity, $template_price, $req_type);
@@ -168,7 +161,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $unique_id = uniqid('custom_', true);
         $req_type = 'custom';
 
-        // Check if a custom request with the same ID already exists in the cart_item_line
+
         $check_query = "SELECT id, quantity FROM cart_item_line WHERE cart_id = ? AND custom_request_id = ? AND status = 'active'";
         $stmt = $conn->prepare($check_query);
         $stmt->bind_param("ii", $cart_id, $custom_request_id);
@@ -176,7 +169,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $result = $stmt->get_result();
 
         if ($result->num_rows > 0) {
-            // Item exists and is active, update quantity
             $existing_item = $result->fetch_assoc();
             $new_quantity = $existing_item['quantity'] + $quantity;
 
@@ -186,7 +178,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $success = $stmt->execute();
             $message = $success ? 'Cart quantity updated!' : 'Error updating cart quantity.';
         } else {
-            // Item doesn't exist or is completed, insert as new item
+
             $insert_query = "INSERT INTO cart_item_line (cart_id, custom_request_id, final_design, unique_id, quantity, price, req_type, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'active')";
             $stmt = $conn->prepare($insert_query);
             $stmt->bind_param("iissids", $cart_id, $custom_request_id, $final_design, $unique_id, $quantity, $price, $req_type);

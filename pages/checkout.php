@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once('../includes/db.php');
+require_once('../includes/create_notification.php');
 
 // Check if user is logged in and is a customer
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'Customer') {
@@ -92,16 +93,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkout'])) {
         // Commit transaction
         $conn->commit();
 
-        // // Remove checked out items from cart
-        // if (!empty($selected_items)) {
-        //     $delete_query = "DELETE FROM cart_item_line WHERE cart_id = ? AND id IN (" .
-        //         implode(',', array_fill(0, count($selected_items), '?')) . ")";
-        //     $stmt = $conn->prepare($delete_query);
-        //     $types = str_repeat('i', count($selected_items) + 1);
-        //     $params = array_merge([$cart_id], $selected_items);
-        //     $stmt->bind_param($types, ...$params);
-        //     $stmt->execute();
-        // }
+        // Create notification for the customer
+        $notification_title = "Order Placed Successfully";
+        $notification_message = "Your order #$order_id has been placed successfully. You can track your order status in Your Orders.";
+        createNotification(
+            $conn,
+            $user_id,
+            $notification_title,
+            $notification_message,
+            'order_placed',
+            $order_id,
+            'order'
+        );
+
+        // Create notification for admin
+        $admin_query = "SELECT id FROM users WHERE role = 'Admin' LIMIT 1";
+        $admin_result = $conn->query($admin_query);
+        if ($admin = $admin_result->fetch_assoc()) {
+            createNotification(
+                $conn,
+                $admin['id'],
+                "New Order Received",
+                "A new order #$order_id has been placed and is waiting for processing.",
+                'new_order',
+                $order_id,
+                'order'
+            );
+        }
+
+        // Update cart items status
         if (!empty($selected_items)) {
             $update_query = "UPDATE cart_item_line SET status = 'completed' 
                             WHERE cart_id = ? AND id IN (" .
@@ -131,14 +151,36 @@ $cart_items_query = "SELECT cil.*, t.name as template_name, t.image_path as temp
                     LEFT JOIN templates t ON cil.template_id = t.id 
                     LEFT JOIN custom_template_requests ctr ON cil.custom_request_id = ctr.id 
                     WHERE cil.cart_id = ? AND (cil.status = 'active' OR cil.status IS NULL)";
+
+// If specific items are selected, only show those
+if (isset($_GET['items']) && !empty($_GET['items'])) {
+    $selected_items = array_map('intval', explode(',', $_GET['items']));
+    $placeholders = str_repeat('?,', count($selected_items) - 1) . '?';
+    $cart_items_query .= " AND cil.id IN ($placeholders)";
+}
+
 $stmt = $conn->prepare($cart_items_query);
-$stmt->bind_param('i', $cart_id);
+
+if (isset($_GET['items']) && !empty($_GET['items'])) {
+    $types = str_repeat('i', count($selected_items) + 1);
+    $params = array_merge([$cart_id], $selected_items);
+    $stmt->bind_param($types, ...$params);
+} else {
+    $stmt->bind_param('i', $cart_id);
+}
+
 $stmt->execute();
 $cart_items = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
 $total = 0;
 foreach ($cart_items as $item) {
     $total += $item['price'] * $item['quantity'];
+}
+
+// If no items are selected or available, redirect back to cart
+if (empty($cart_items)) {
+    header('Location: cart.php');
+    exit();
 }
 ?>
 
@@ -470,7 +512,8 @@ foreach ($cart_items as $item) {
                 <div class="checkout-items">
                     <?php foreach ($cart_items as $item): ?>
                         <div class="checkout-item">
-                            <input type="checkbox" name="selected_items[]" value="<?php echo $item['id']; ?>" checked>
+                            <input type="checkbox" name="selected_items[]" value="<?php echo $item['id']; ?>" checked
+                                onchange="updateCheckoutTotal()">
                             <img src="<?php echo $item['template_image'] ? '../uploads/templates/' . $item['template_image'] : '../uploads/custom_templates/' . $item['final_design']; ?>"
                                 alt="<?php echo htmlspecialchars($item['template_name'] ?? 'Custom Design'); ?>"
                                 onerror="this.src='../assets/images/placeholder.jpg'">
@@ -487,6 +530,8 @@ foreach ($cart_items as $item) {
                                     </div>
                                 <?php endif; ?>
                             </div>
+                            <input type="hidden" class="item-price" value="<?php echo $item['price']; ?>">
+                            <input type="hidden" class="item-quantity" value="<?php echo $item['quantity']; ?>">
                         </div>
                     <?php endforeach; ?>
                 </div>
@@ -496,7 +541,7 @@ foreach ($cart_items as $item) {
                     <span class="checkout-total-amount">Rs <?php echo number_format($total, 2); ?></span>
                 </div>
 
-                <button type="submit" name="checkout" class="place-order-btn">
+                <button type="submit" name="checkout" class="place-order-btn" onclick="return validateCheckout()">
                     <i class="fas fa-shopping-bag"></i>
                     Place Order
                 </button>
@@ -505,6 +550,38 @@ foreach ($cart_items as $item) {
     </div>
 
     <?php include('../includes/footer.php'); ?>
+
+    <script>
+        // Function to update total based on selected items
+        function updateCheckoutTotal() {
+            const items = document.querySelectorAll('.checkout-item');
+            let total = 0;
+
+            items.forEach(item => {
+                const checkbox = item.querySelector('input[type="checkbox"]');
+                if (checkbox.checked) {
+                    const price = parseFloat(item.querySelector('.item-price').value);
+                    const quantity = parseInt(item.querySelector('.item-quantity').value);
+                    total += price * quantity;
+                }
+            });
+
+            document.querySelector('.checkout-total-amount').textContent = 'Rs ' + total.toFixed(2);
+        }
+
+        // Function to validate checkout before submission
+        function validateCheckout() {
+            const selectedItems = document.querySelectorAll('input[name="selected_items[]"]:checked');
+            if (selectedItems.length === 0) {
+                alert('Please select at least one item to checkout.');
+                return false;
+            }
+            return true;
+        }
+
+        // Initialize total on page load
+        document.addEventListener('DOMContentLoaded', updateCheckoutTotal);
+    </script>
 </body>
 
 </html>

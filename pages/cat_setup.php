@@ -198,33 +198,36 @@ function getCategoryById($conn, $id)
             padding: 20px;
         }
 
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin: 30px;
+        .main-content {
+            min-height: calc(100vh - 60px);
+            padding-bottom: 60px;
+            position: relative;
+        }
+
+        .category-section {
+            width: 100%;
+            text-align: left;
+            margin: 10px 0;
         }
 
         .add-category-btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 12px 24px;
             background-color: #2ecc71;
             color: white;
-            padding: 12px 24px;
             border: none;
             border-radius: 4px;
             cursor: pointer;
             font-size: 16px;
-            transition: background-color 0.3s ease;
-            display: flex;
-            align-items: center;
+            text-decoration: none;
             gap: 8px;
+            transition: all 0.3s ease;
         }
 
         .add-category-btn:hover {
             background-color: #27ae60;
-        }
-
-        .add-category-btn i {
-            font-size: 18px;
+            transform: translateX(-4px);
         }
 
         .category-form {
@@ -236,8 +239,6 @@ function getCategoryById($conn, $id)
             display: none;
             max-width: 600px;
             width: 100%;
-            margin-left: auto;
-            margin-right: auto;
         }
 
         .category-form.show {
@@ -269,112 +270,17 @@ function getCategoryById($conn, $id)
             outline: none;
         }
 
-        .button-group {
-            display: flex;
-            gap: 10px;
+        h2 {
+            color: #374151;
+            font-size: 1.5rem;
+            margin: 10px 0 20px;
+            font-weight: 400;
+            font-family: 'Poppins', sans-serif;
+            letter-spacing: 0.01em;
         }
 
-        .button {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: all 0.3s ease;
-        }
-
-        .btn-primary {
-            background-color: #2ecc71;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background-color: #27ae60;
-        }
-
-        .btn-secondary {
-            background-color: #95a5a6;
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background-color: #7f8c8d;
-        }
-
-        .btn-danger {
-            background-color: #e74c3c;
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background-color: #c0392b;
-        }
-
-        .categories-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-            margin-top: 30px;
-        }
-
-        .category-card {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            transition: transform 0.3s ease;
-        }
-
-        .category-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .category-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .category-name {
-            font-size: 18px;
-            font-weight: bold;
-            color: #333;
-        }
-
-        .category-description {
-            color: #666;
-            margin-bottom: 15px;
-            line-height: 1.4;
-        }
-
-        .category-actions {
-            display: flex;
-            gap: 8px;
-        }
-
-        .message {
-            padding: 15px;
-            border-radius: 4px;
-            margin-bottom: 20px;
-        }
-
-        .success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        @media (max-width: 768px) {
-            .categories-grid {
-                grid-template-columns: 1fr;
-            }
+        .existing-categories {
+            margin-top: 15px;
         }
 
         .table-responsive {
@@ -392,21 +298,25 @@ function getCategoryById($conn, $id)
             margin-top: 0;
             background: transparent;
             border-radius: 8px;
-            box-shadow: none;
             overflow: hidden;
-        }
-
-        .category-table th,
-        .category-table td {
-            padding: 16px 14px;
-            text-align: left;
         }
 
         .category-table th {
             background: #f4f8fb;
-            font-weight: bold;
-            color: #222;
+            padding: 16px 14px;
+            text-align: left;
+            font-weight: 500;
+            color: #374151;
             border-bottom: 2px solid #e0e0e0;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+        }
+
+        .category-table td {
+            padding: 16px 14px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: middle;
         }
 
         .category-table tbody tr {
@@ -441,6 +351,7 @@ function getCategoryById($conn, $id)
             align-items: center;
             gap: 4px;
             white-space: nowrap;
+            color: white;
         }
 
         .action-buttons .button i {
@@ -449,7 +360,6 @@ function getCategoryById($conn, $id)
 
         .action-buttons .btn-secondary {
             background-color: #3498db;
-            color: white;
         }
 
         .action-buttons .btn-secondary:hover {
@@ -459,7 +369,6 @@ function getCategoryById($conn, $id)
 
         .action-buttons .btn-primary {
             background-color: #2ecc71;
-            color: white;
         }
 
         .action-buttons .btn-primary:hover {
@@ -469,17 +378,11 @@ function getCategoryById($conn, $id)
 
         .action-buttons .btn-danger {
             background-color: #e74c3c;
-            color: white;
         }
 
         .action-buttons .btn-danger:hover {
             background-color: #c0392b;
             transform: translateY(-1px);
-        }
-
-        /* Update table styles for better button display */
-        .category-table td {
-            vertical-align: middle;
         }
 
         .category-table td:last-child {
@@ -516,7 +419,10 @@ function getCategoryById($conn, $id)
 
         .btn-info:hover {
             background-color: #217dbb !important;
-            color: #fff !important;
+        }
+
+        .pagination-controls {
+            margin-top: 20px;
         }
     </style>
 </head>
@@ -526,15 +432,15 @@ function getCategoryById($conn, $id)
 
     <div class="main-content">
         <?php include('../includes/inner_header.php'); ?>
-        <div class="page-header">
-            <?php if ($_SESSION['role'] === 'Admin' && $page == 1): ?>
-                <button class="add-category-btn" id="toggleButton" onclick="toggleForm()">
-                    <i class="fas fa-plus"></i> Add New Category
-                </button>
-            <?php endif; ?>
-        </div>
 
         <div class="container">
+            <div class="category-section">
+                <?php if ($_SESSION['role'] === 'Admin' || $_SESSION['role'] === 'Super Admin'): ?>
+                    <button class="add-category-btn" id="toggleButton" onclick="toggleForm()">
+                        <i class="fas fa-plus"></i> Add New Category
+                    </button>
+                <?php endif; ?>
+            </div>
 
             <?php if ($message): ?>
                 <div class="message success"><?php echo htmlspecialchars($message); ?></div>
@@ -544,7 +450,7 @@ function getCategoryById($conn, $id)
                 <div class="message error"><?php echo htmlspecialchars($error); ?></div>
             <?php endif; ?>
 
-            <div class="category-form" id="categoryForm" style="display: none;">
+            <div class="category-form" id="categoryForm">
                 <h2><?php echo $edit_mode ? 'Edit Category' : 'Add New Category'; ?></h2>
                 <form method="POST" action="cat_setup.php">
                     <?php if ($edit_mode): ?>
@@ -573,7 +479,7 @@ function getCategoryById($conn, $id)
                 </form>
             </div>
 
-            <?php if (!($edit_mode || (isset($_GET['showForm']) && $_GET['showForm'] == '1'))): ?>
+            <div class="existing-categories">
                 <h2>Existing Categories</h2>
                 <div class="table-responsive" id="categoriesTable">
                     <table class="category-table">
@@ -659,7 +565,7 @@ function getCategoryById($conn, $id)
                         <?php endif; ?>
                     </div>
                 <?php endif; ?>
-            <?php endif; ?>
+            </div>
         </div>
     </div>
 
@@ -669,15 +575,15 @@ function getCategoryById($conn, $id)
             const button = document.getElementById('toggleButton');
             const table = document.getElementById('categoriesTable');
 
-            if (form.style.display === 'none') {
+            if (form.style.display === 'none' || form.style.display === '') {
                 form.style.display = 'block';
                 button.innerHTML = '<i class="fas fa-arrow-left"></i> Back';
-                button.style.backgroundColor = '#e74c3c'; // Red color for back button
+                button.style.backgroundColor = '#e74c3c';
                 if (table) table.style.display = 'none';
             } else {
                 form.style.display = 'none';
                 button.innerHTML = '<i class="fas fa-plus"></i> Add New Category';
-                button.style.backgroundColor = '#2ecc71'; // Green color for add button
+                button.style.backgroundColor = '#2ecc71';
                 if (table) table.style.display = 'block';
             }
         }
@@ -690,8 +596,10 @@ function getCategoryById($conn, $id)
                 const table = document.getElementById('categoriesTable');
                 if (form) {
                     form.style.display = 'block';
-                    button.innerHTML = '<i class="fas fa-arrow-left"></i> Back';
-                    button.style.backgroundColor = '#e74c3c';
+                    if (button) {
+                        button.innerHTML = '<i class="fas fa-arrow-left"></i> Back';
+                        button.style.backgroundColor = '#e74c3c';
+                    }
                     if (table) table.style.display = 'none';
                 }
             });

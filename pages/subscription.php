@@ -3,6 +3,7 @@ session_start();
 require_once '../includes/dbcon.php';
 require_once '../includes/header.php';
 require_once '../includes/SubscriptionManager.php';
+require_once '../includes/EsewaPayment.php';
 
 $pageTitle = 'Subscription Plans';
 
@@ -14,6 +15,7 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 $subscriptionManager = new SubscriptionManager($pdo, $user_id);
+$esewa = new EsewaPayment();
 
 // Get current subscription status
 $stmt = $pdo->prepare("
@@ -26,14 +28,23 @@ $stmt = $pdo->prepare("
 $stmt->execute([$user_id]);
 $subscription = $stmt->fetch(PDO::FETCH_ASSOC);
 
-// Get usage statistics
-$stmt = $pdo->prepare("
-    SELECT custom_design_count, template_modification_count 
-    FROM subscription_limits 
-    WHERE user_id = ?
-");
-$stmt->execute([$user_id]);
-$usage = $stmt->fetch(PDO::FETCH_ASSOC);
+// Get payment form data
+$amount = 199.00; // Premium plan price
+// Use absolute paths for success and failure URLs
+$baseUrl = "http://" . $_SERVER['HTTP_HOST'] . "/printing_press/pages";
+$successUrl = $baseUrl . "/subscription_payment_success.php";
+$failureUrl = $baseUrl . "/payment_fail.php?type=subscription";
+
+// Debug log the URLs and amount
+error_log("Subscription Payment Form Generation:");
+error_log("Amount: " . $amount);
+error_log("Success URL: " . $successUrl);
+error_log("Failure URL: " . $failureUrl);
+
+$paymentData = $esewa->getPaymentForm($amount, $successUrl, $failureUrl);
+
+// Debug log the payment form data
+error_log("eSewa Payment Form Data: " . print_r($paymentData, true));
 ?>
 
 <!DOCTYPE html>
@@ -43,9 +54,11 @@ $usage = $stmt->fetch(PDO::FETCH_ASSOC);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $pageTitle; ?></title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <style>
         .subscription-container {
-            max-width: 1200px;
+            max-width: 800px;
             margin: 0 auto;
             padding: 20px;
         }
@@ -115,9 +128,9 @@ $usage = $stmt->fetch(PDO::FETCH_ASSOC);
         }
 
         .plans-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
             margin-top: 40px;
         }
 
@@ -126,8 +139,11 @@ $usage = $stmt->fetch(PDO::FETCH_ASSOC);
             border-radius: 12px;
             padding: 30px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            text-align: center;
             transition: transform 0.3s ease;
+            display: grid;
+            grid-template-columns: 2fr 3fr 2fr;
+            align-items: center;
+            gap: 30px;
         }
 
         .plan-card:hover {
@@ -135,7 +151,7 @@ $usage = $stmt->fetch(PDO::FETCH_ASSOC);
         }
 
         .plan-header {
-            margin-bottom: 20px;
+            text-align: center;
         }
 
         .plan-name {
@@ -153,17 +169,23 @@ $usage = $stmt->fetch(PDO::FETCH_ASSOC);
         .plan-features {
             list-style: none;
             padding: 0;
-            margin: 20px 0;
+            margin: 0;
+            border-left: 2px solid #eee;
+            padding-left: 30px;
         }
 
         .plan-features li {
             padding: 10px 0;
-            border-bottom: 1px solid #eee;
             color: #7f8c8d;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .plan-features li:last-child {
-            border-bottom: none;
+        .plan-features li:before {
+            content: "✓";
+            color: #2ecc71;
+            font-weight: bold;
         }
 
         .subscribe-btn {
@@ -176,6 +198,8 @@ $usage = $stmt->fetch(PDO::FETCH_ASSOC);
             cursor: pointer;
             transition: background 0.3s ease;
             width: 100%;
+            max-width: 200px;
+            justify-self: center;
         }
 
         .subscribe-btn:hover {
@@ -200,6 +224,26 @@ $usage = $stmt->fetch(PDO::FETCH_ASSOC);
             color: #7f8c8d;
             font-size: 0.9em;
             margin-top: 10px;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .plan-card {
+                grid-template-columns: 1fr;
+                text-align: center;
+                gap: 20px;
+            }
+
+            .plan-features {
+                border-left: none;
+                border-top: 2px solid #eee;
+                padding-left: 0;
+                padding-top: 20px;
+            }
+
+            .plan-features li {
+                justify-content: center;
+            }
         }
     </style>
 </head>
@@ -211,6 +255,24 @@ $usage = $stmt->fetch(PDO::FETCH_ASSOC);
         <?php include('../includes/inner_header.php'); ?>
 
         <div class="subscription-container">
+            <?php if (isset($_SESSION['success_message'])): ?>
+                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4">
+                    <?php
+                    echo $_SESSION['success_message'];
+                    unset($_SESSION['success_message']);
+                    ?>
+                </div>
+            <?php endif; ?>
+
+            <?php if (isset($_SESSION['error_message'])): ?>
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
+                    <?php
+                    echo $_SESSION['error_message'];
+                    unset($_SESSION['error_message']);
+                    ?>
+                </div>
+            <?php endif; ?>
+
             <div class="current-status">
                 <div class="status-header">
                     <h2 class="status-title">Current Subscription Status</h2>
@@ -230,11 +292,22 @@ $usage = $stmt->fetch(PDO::FETCH_ASSOC);
 
                 <div class="usage-stats">
                     <div class="stat-card">
-                        <div class="stat-value"><?php echo $usage ? $usage['custom_design_count'] : 0; ?>/2</div>
+                        <div class="stat-value">
+                            <?php
+                            $custom_query = $pdo->prepare("SELECT COUNT(*) as count FROM custom_template_requests WHERE user_id = ? AND status != 'cancelled'");
+                            $custom_query->execute([$user_id]);
+                            echo $custom_query->fetch(PDO::FETCH_ASSOC)['count'];
+                            ?>/3
+                        </div>
                         <div class="stat-label">Custom Designs Used</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-value"><?php echo $usage ? $usage['template_modification_count'] : 0; ?>/2
+                        <div class="stat-value">
+                            <?php
+                            $mod_query = $pdo->prepare("SELECT COUNT(*) as count FROM template_modifications WHERE user_id = ? AND status != 'cancelled'");
+                            $mod_query->execute([$user_id]);
+                            echo $mod_query->fetch(PDO::FETCH_ASSOC)['count'];
+                            ?>/3
                         </div>
                         <div class="stat-label">Template Modifications Used</div>
                     </div>
@@ -271,27 +344,44 @@ $usage = $stmt->fetch(PDO::FETCH_ASSOC);
                         <li>Advanced Design Features</li>
                     </ul>
                     <?php if ($subscription && $subscription['subscription_type'] === 'premium'): ?>
-                        <button class="subscribe-btn disabled" disabled>Current Plan</button>
-                        <p class="expiry-date">Renews on:
-                            <?php echo date('F j, Y', strtotime($subscription['end_date'])); ?>
-                        </p>
+                        <div>
+                            <button class="subscribe-btn disabled" disabled>Current Plan</button>
+                            <p class="expiry-date">Renews on:
+                                <?php echo date('F j, Y', strtotime($subscription['end_date'])); ?>
+                            </p>
+                        </div>
                     <?php else: ?>
-                        <button class="subscribe-btn" onclick="initiateSubscription()">Subscribe Now</button>
+                        <form id="esewaForm" action="<?php echo $paymentData['action_url']; ?>" method="POST">
+                            <?php
+                            // Add payment type to the form data
+                            $paymentData['fields']['payment_type'] = 'subscription';
+                            foreach ($paymentData['fields'] as $name => $value): ?>
+                                <input type="hidden" name="<?php echo $name; ?>"
+                                    value="<?php echo htmlspecialchars($value); ?>">
+                            <?php endforeach; ?>
+                            <button type="submit" class="subscribe-btn">
+                                Subscribe Now with eSewa
+                            </button>
+                        </form>
                     <?php endif; ?>
                 </div>
             </div>
         </div>
+
+        <?php include('../includes/footer.php'); ?>
     </div>
 
     <script>
-        function initiateSubscription() {
-            // Here you would integrate with your payment gateway
-            // For now, we'll just show a message
-            alert('Payment integration coming soon! This is where you would integrate with a payment gateway like Stripe or PayPal.');
-        }
+        document.addEventListener('DOMContentLoaded', function () {
+            const esewaForm = document.getElementById('esewaForm');
+            if (esewaForm) {
+                esewaForm.addEventListener('submit', function (e) {
+                    // You could add a loading spinner or disable the button here
+                    console.log('Submitting payment to eSewa...');
+                });
+            }
+        });
     </script>
-
-    <?php include('../includes/footer.php'); ?>
 </body>
 
 </html>

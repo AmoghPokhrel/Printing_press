@@ -72,6 +72,92 @@ $paginated_admins = array_slice($admins, $start, $per_page);
             background-color: #2ecc71;
             color: white;
         }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 99999;
+        }
+
+        .modal.show {
+            opacity: 1;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+            z-index: 100000;
+        }
+
+        .modal.show .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-content h3 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: #2d3748;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+            font-size: 1.5rem;
+        }
+
+        .modal-content p {
+            margin: 12px 0;
+            color: #4a5568;
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+        }
+
+        .modal-content strong {
+            color: #2d3748;
+            font-weight: 500;
+            margin-right: 8px;
+        }
+
+        .close {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            font-size: 24px;
+            color: #a0aec0;
+            cursor: pointer;
+            transition: color 0.2s ease, transform 0.2s ease;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .close:hover {
+            color: #e53e3e;
+            transform: rotate(90deg);
+        }
+
+        /* Prevent scrolling when modal is open */
+        body.modal-open {
+            overflow: hidden;
+        }
     </style>
 </head>
 
@@ -83,7 +169,7 @@ $paginated_admins = array_slice($admins, $start, $per_page);
         <?php include('../includes/inner_header.php'); ?>
 
         <div class="container">
-            <h2>Admin Setup</h2>
+            <!-- <h2>Admin Setup</h2> -->
 
             <!-- Add Admin Button - Only for Super Admin -->
             <?php if ($_SESSION['role'] === 'Super Admin'): ?>
@@ -174,12 +260,29 @@ $paginated_admins = array_slice($admins, $start, $per_page);
             document.getElementById('adminPhone').innerText = phone;
             document.getElementById('adminAddress').innerText = address;
             document.getElementById('adminDOB').innerText = dob;
-            document.getElementById('adminModal').style.display = 'flex';
+            const modal = document.getElementById('adminModal');
+            document.body.classList.add('modal-open');
+            modal.style.display = 'flex';
+            // Trigger reflow to ensure transition works
+            modal.offsetHeight;
+            modal.classList.add('show');
         }
 
         function closeModal() {
-            document.getElementById('adminModal').style.display = 'none';
+            const modal = document.getElementById('adminModal');
+            document.body.classList.remove('modal-open');
+            modal.classList.remove('show');
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300); // Match the transition duration
         }
+
+        // Close modal when clicking outside
+        document.getElementById('adminModal').addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
 
         function toggleStatus(adminId, currentStatus) {
             const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
@@ -198,18 +301,7 @@ $paginated_admins = array_slice($admins, $start, $per_page);
                     } else {
                         alert('Error updating status: ' + data.message);
                     }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Error updating status. Please try again.');
                 });
-        }
-
-        window.onclick = function (event) {
-            let modal = document.getElementById('adminModal');
-            if (event.target === modal) {
-                modal.style.display = 'none';
-            }
         }
     </script>
 

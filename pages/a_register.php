@@ -3,7 +3,7 @@ session_start();
 $pageTitle = 'Admin Registration';
 include '../includes/db.php';
 
-// Redirect if not logged in or not an admin
+
 if (!isset($_SESSION['user_id']) || ($_SESSION['role'] !== 'Admin' && $_SESSION['role'] !== 'Super Admin')) {
     echo '<script>alert("You need administrator privileges to access this page"); window.location.href = "login.php";</script>';
     exit();
@@ -29,7 +29,6 @@ $error = "";
     <div class="main-content">
         <?php include('../includes/inner_header.php'); ?>
 
-        <!-- Back Button -->
         <div class="back-button">
             <a href="admin_setup.php" class="btn-primary">Back</a>
         </div>

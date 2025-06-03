@@ -16,7 +16,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['id'])) {
     $email = sanitize_input($_POST['email']);
     $phone = sanitize_input($_POST['phone']);
     $address = sanitize_input($_POST['address']);
-    $dob = sanitize_input($_POST['dob']);
+    $dob = sanitize_input($_POST['DOB']);
     $gender = sanitize_input($_POST['gender']);
     $staff_role = sanitize_input($_POST['staff_role']);
 
@@ -73,7 +73,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['id'])) {
     }
 
     // Use a prepared statement to prevent SQL injection
-    $update_query = "UPDATE users SET name=?, phone=?, address=?, dob=?, gender=?, staff_role=?, updated_at=NOW() WHERE id=? AND role='Staff'";
+    $update_query = "UPDATE users SET name=?, phone=?, address=?, DOB=?, gender=?, staff_role=?, updated_at=NOW() WHERE id=? AND role='Staff'";
 
     if ($stmt = mysqli_prepare($conn, $update_query)) {
         // Bind the parameters

@@ -190,16 +190,16 @@ if (isset($_SESSION['user_id']) && $_SESSION['role'] === 'Customer') {
                 background: var(--bg-light);
                 min-height: calc(100vh - 64px);
                 margin-left: 250px;
-                padding-top: 64px;
+                padding-top: 20px;
+                transition: all 0.3s ease;
             }
 
             .dashboard-container {
                 max-width: 1400px;
                 margin: 0 auto;
-                padding: 1.5rem;
+                padding: 2rem;
                 position: relative;
-                padding-top: calc(64px + 1.5rem);
-                /* Added padding to account for fixed nav */
+                padding-top: 80px;
             }
 
             .dashboard-header {
@@ -555,10 +555,19 @@ if (isset($_SESSION['user_id']) && $_SESSION['role'] === 'Customer') {
                 font-size: 0.813rem;
             }
 
+            @media (max-width: 1200px) {
+                .dashboard-container {
+                    padding: 1.5rem;
+                }
+            }
+
             @media (max-width: 768px) {
+                .main-content {
+                    margin-left: 0;
+                }
+
                 .dashboard-container {
                     padding: 1rem;
-                    padding-top: calc(64px + 1rem);
                 }
 
                 .dashboard-header {
@@ -636,42 +645,45 @@ if (isset($_SESSION['user_id']) && $_SESSION['role'] === 'Customer') {
             /* Navigation Bar Styles */
             .nav-container {
                 background: var(--bg-white);
-                padding: 1rem 0;
+                padding: 1.25rem 0;
                 border-bottom: 1px solid #e5e7eb;
                 position: fixed;
                 top: 64px;
-                /* Adjusted to account for the header height */
                 left: 250px;
-                /* Adjusted to account for the sidebar */
                 right: 0;
-                z-index: 1000;
+                z-index: 999;
                 box-shadow: var(--shadow-sm);
                 backdrop-filter: blur(8px);
                 -webkit-backdrop-filter: blur(8px);
                 background-color: rgba(255, 255, 255, 0.95);
+                transition: all 0.3s ease;
+            }
+
+            body.sidebar-collapsed .nav-container {
+                left: 0;
             }
 
             .nav-content {
                 max-width: 1400px;
                 margin: 0 auto;
-                padding: 0 1.5rem;
+                padding: 0 2rem;
                 display: flex;
                 justify-content: center;
-                gap: 2rem;
+                gap: 2.5rem;
                 flex-wrap: wrap;
             }
 
             /* Add padding to the first section to prevent content from hiding under the fixed nav */
             #welcome-section {
-                padding-top: 80px;
+                padding-top: 120px;
             }
 
             .nav-item {
-                padding: 0.5rem 1rem;
+                padding: 0.75rem 1.5rem;
                 color: var(--text-secondary);
                 text-decoration: none;
                 font-weight: 500;
-                font-size: 0.95rem;
+                font-size: 1rem;
                 border-bottom: 2px solid transparent;
                 transition: all 0.2s ease;
                 cursor: pointer;
@@ -686,17 +698,21 @@ if (isset($_SESSION['user_id']) && $_SESSION['role'] === 'Customer') {
             @media (max-width: 768px) {
                 .nav-container {
                     left: 0;
-                    padding: 0.75rem 0;
+                    padding: 1rem 0;
                 }
 
                 .nav-content {
-                    gap: 1rem;
-                    padding: 0 1rem;
+                    padding: 0 1.5rem;
+                    justify-content: center;
                 }
 
                 .nav-item {
-                    font-size: 0.875rem;
-                    padding: 0.5rem;
+                    font-size: 0.9rem;
+                    padding: 0.625rem 1rem;
+                }
+
+                .dashboard-container {
+                    padding-top: 100px;
                 }
             }
 
@@ -705,8 +721,13 @@ if (isset($_SESSION['user_id']) && $_SESSION['role'] === 'Customer') {
             #media-section,
             #popular-section,
             #preferences-section {
-                scroll-margin-top: 150px;
-                /* This ensures sections scroll to the right position */
+                scroll-margin-top: 180px;
+                margin-top: 3rem;
+            }
+
+            /* Add styles for when sidebar is collapsed */
+            body.sidebar-collapsed .main-content {
+                margin-left: 0;
             }
         </style>
     </head>
@@ -937,7 +958,7 @@ if (isset($_SESSION['user_id']) && $_SESSION['role'] === 'Customer') {
             function scrollToSection(sectionId) {
                 const section = document.getElementById(sectionId);
                 const navHeight = document.querySelector('.nav-container').offsetHeight;
-                const offset = 20; // Additional offset for better visibility
+                const offset = 20;
 
                 if (section) {
                     const targetPosition = section.offsetTop - navHeight - offset;
@@ -946,7 +967,6 @@ if (isset($_SESSION['user_id']) && $_SESSION['role'] === 'Customer') {
                         behavior: 'smooth'
                     });
 
-                    // Update active state
                     document.querySelectorAll('.nav-item').forEach(item => {
                         item.classList.remove('active');
                     });
@@ -954,7 +974,6 @@ if (isset($_SESSION['user_id']) && $_SESSION['role'] === 'Customer') {
                 }
             }
 
-            // Highlight active section on scroll
             window.addEventListener('scroll', function () {
                 const sections = document.querySelectorAll('[id$="-section"]');
                 const navItems = document.querySelectorAll('.nav-item');

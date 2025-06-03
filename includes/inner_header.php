@@ -73,92 +73,114 @@ if (isset($_SESSION['role']) && $_SESSION['role'] === 'Customer') {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 1.5rem;
+            padding: 0 2rem;
             background-color: #ffffff;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-            z-index: 999;
-            transition: left 0.3s ease;
+            z-index: 1019;
+            transition: all 0.3s ease;
         }
 
-        header.sidebar-minimized {
-            left: 80px;
+        body.sidebar-collapsed header {
+            left: 0;
+            padding-left: 5rem;
         }
 
         .menu-icon {
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 1.25rem;
             font-size: 1.25rem;
             color: #4b5563;
             transition: color 0.2s ease;
-            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            margin-left: 0;
         }
 
         .menu-icon:hover {
             color: #2563eb;
+            background-color: #f8fafc;
         }
 
         .page-title {
-            font-size: 1.25rem;
+            font-size: 1.5rem;
             font-weight: 600;
             color: #1e293b;
             margin: 0;
+            margin-left: 0;
             letter-spacing: -0.025em;
+            transition: all 0.2s ease;
         }
 
         .header-right {
             display: flex;
             align-items: center;
-            gap: 1.5rem;
+            gap: 0.75rem;
+            margin-left: auto;
         }
 
         /* Profile styles */
         .profile {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
-            padding: 0.5rem 1rem;
+            gap: 1rem;
+            padding: 0.5rem 0.75rem;
             border-radius: 9999px;
             background: #f8fafc;
             transition: all 0.2s ease;
             cursor: pointer;
+            border: 1px solid #e5e7eb;
         }
 
         .profile:hover {
             background: #f1f5f9;
+            border-color: #d1d5db;
         }
 
         .profile-icon {
-            width: 2.25rem;
-            height: 2.25rem;
+            width: 2.5rem;
+            height: 2.5rem;
             background: #2563eb;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 1rem;
+            font-size: 1.125rem;
             font-weight: 500;
+            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.1);
         }
 
         .profile-info {
             text-align: left;
+            min-width: 150px;
+            margin-left: 0.5rem;
         }
 
         .profile-info strong {
             display: block;
-            font-size: 0.875rem;
-            color: #1e293b;
-            font-weight: 600;
-            line-height: 1.25;
-            letter-spacing: -0.025em;
+            font-size: 0.95rem;
+            color: #2563eb;
+            font-weight: 500;
+            line-height: 1.4;
+            letter-spacing: 0.01em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-family: 'Poppins', sans-serif;
         }
 
         .profile-info small {
-            font-size: 0.75rem;
-            color: #64748b;
-            font-weight: 500;
-            letter-spacing: -0.025em;
+            font-size: 0.8rem;
+            color: #4b5563;
+            font-weight: 400;
+            letter-spacing: 0.02em;
+            display: block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-family: 'Inter', sans-serif;
+            margin-top: 2px;
         }
 
         /* Cart button styles */
@@ -168,24 +190,27 @@ if (isset($_SESSION['role']) && $_SESSION['role'] === 'Customer') {
             border: none;
             cursor: pointer;
             padding: 0.5rem;
-            border-radius: 0.375rem;
+            border-radius: 0.5rem;
             color: #4b5563;
             transition: all 0.2s ease;
+            border: 1px solid transparent;
+            margin-left: 0.25rem;
         }
 
         .cart-btn:hover {
             background-color: #f8fafc;
             color: #2563eb;
+            border-color: #e5e7eb;
         }
 
         .cart-icon {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
         }
 
         .cart-count {
             position: absolute;
-            top: -0.25rem;
-            right: -0.25rem;
+            top: -0.15rem;
+            right: -0.15rem;
             background-color: #ef4444;
             color: white;
             border-radius: 9999px;
@@ -194,8 +219,24 @@ if (isset($_SESSION['role']) && $_SESSION['role'] === 'Customer') {
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 600;
+            box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+        }
+
+        /* Add responsive adjustments */
+        @media (max-width: 768px) {
+            .profile-info {
+                display: none;
+            }
+
+            .cart-btn {
+                padding: 0.5rem;
+            }
+
+            .page-title {
+                font-size: 1.25rem;
+            }
         }
 
         /* Cart Dropdown Styles */
@@ -209,7 +250,7 @@ if (isset($_SESSION['role']) && $_SESSION['role'] === 'Customer') {
             border-radius: 0.75rem;
             border: 1px solid #f1f5f9;
             padding: 0;
-            z-index: 1000;
+            z-index: 1003;
             display: none;
             max-height: 480px;
             overflow-y: auto;
@@ -463,18 +504,20 @@ if (isset($_SESSION['role']) && $_SESSION['role'] === 'Customer') {
             padding-top: 64px;
             min-height: 100vh;
             background-color: #f8fafc;
+            position: relative;
         }
 
         /* Remove these duplicate styles that were causing the extra spacing */
         body {
             padding-top: 0;
-            /* Remove this */
         }
 
         .main-content {
             margin-top: 0;
-            /* Remove this */
-            position: relative;
+        }
+
+        body.sidebar-collapsed .main-content {
+            margin-left: 0;
         }
 
         /* Profile Dropdown Styles */
@@ -493,7 +536,7 @@ if (isset($_SESSION['role']) && $_SESSION['role'] === 'Customer') {
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             min-width: 200px;
             display: none;
-            z-index: 1000;
+            z-index: 1016;
             overflow: hidden;
             animation: dropdownFade 0.2s ease;
         }
@@ -550,7 +593,7 @@ if (isset($_SESSION['role']) && $_SESSION['role'] === 'Customer') {
         .image-modal {
             display: none;
             position: fixed;
-            z-index: 1001;
+            z-index: 1050;
             left: 0;
             top: 0;
             width: 100%;
@@ -585,6 +628,7 @@ if (isset($_SESSION['role']) && $_SESSION['role'] === 'Customer') {
             font-weight: bold;
             transition: 0.3s;
             cursor: pointer;
+            z-index: 1051;
         }
 
         @keyframes zoom {
@@ -605,48 +649,274 @@ if (isset($_SESSION['role']) && $_SESSION['role'] === 'Customer') {
         .cart-item img:hover {
             transform: scale(1.05);
         }
+
+        /* Preference Modal Styles */
+        #preferenceModal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(30, 41, 59, 0.25);
+            z-index: 1050;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(7px);
+        }
+
+        #preferenceModal .modal-content {
+            background: #ffffff;
+            padding: 2rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+        }
+
+        #preferenceModal h2 {
+            color: #1e293b;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+
+        #preferenceModal label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #4b5563;
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+
+        #preferenceModal select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            background-color: #ffffff;
+            color: #1e293b;
+            font-size: 0.875rem;
+        }
+
+        #preferenceModal button[type="submit"] {
+            width: 100%;
+            padding: 0.75rem;
+            background: #2563eb;
+            color: #ffffff;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        #preferenceModal button[type="submit"]:hover {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        /* Toast Notification - should be above all */
+        #cartToast {
+            z-index: 1060;
+        }
+
+        header .profile div {
+            text-align: right;
+            font-size: 14px;
+        }
+
+        /* Notification Styles */
+        .notifications-btn {
+            position: relative;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            color: #4b5563;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+            margin-right: 0.5rem;
+        }
+
+        .notifications-btn:hover {
+            background-color: #f8fafc;
+            color: #2563eb;
+            border-color: #e5e7eb;
+        }
+
+        .notifications-btn i {
+            font-size: 1.25rem;
+        }
+
+        .notification-count {
+            position: absolute;
+            top: -0.15rem;
+            right: -0.15rem;
+            background-color: #ef4444;
+            color: white;
+            border-radius: 9999px;
+            width: 1.25rem;
+            height: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+        }
+
+        .notifications-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            width: 320px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            margin-top: 0.5rem;
+        }
+
+        .notifications-dropdown.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .notifications-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .notifications-header h3 {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        #closeNotifications {
+            background: none;
+            border: none;
+            color: #6b7280;
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 0.375rem;
+            transition: all 0.2s ease;
+        }
+
+        #closeNotifications:hover {
+            background-color: #f3f4f6;
+            color: #1f2937;
+        }
+
+        .notifications-list {
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 0.5rem 0;
+        }
+
+        .notification-item {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #f3f4f6;
+            transition: background-color 0.2s ease;
+            cursor: pointer;
+        }
+
+        .notification-item:last-child {
+            border-bottom: none;
+        }
+
+        .notification-item:hover {
+            background-color: #f8fafc;
+        }
+
+        .notification-item.unread {
+            background-color: #eff6ff;
+        }
+
+        .notification-item.unread:hover {
+            background-color: #dbeafe;
+        }
+
+        .notification-content {
+            font-size: 0.875rem;
+            color: #4b5563;
+            line-height: 1.25rem;
+        }
+
+        .notification-time {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+
+        .empty-notifications {
+            padding: 2rem 1rem;
+            text-align: center;
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
     </style>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const menuIcon = document.querySelector('.menu-icon');
-            const sidebar = document.querySelector('.sidebar');
-            const header = document.querySelector('header');
-            const mainContent = document.querySelector('.main-content');
-
-            // Check for saved state
-            const isSidebarMinimized = localStorage.getItem('sidebarMinimized') === 'true';
-            if (isSidebarMinimized) {
-                sidebar.classList.add('minimized');
-                header.classList.add('sidebar-minimized');
-                mainContent.classList.add('sidebar-minimized');
-            }
-
-            menuIcon.addEventListener('click', function () {
-                sidebar.classList.toggle('minimized');
-                header.classList.toggle('sidebar-minimized');
-                mainContent.classList.toggle('sidebar-minimized');
-
-                // Save state
-                localStorage.setItem('sidebarMinimized', sidebar.classList.contains('minimized'));
-            });
-        });
-    </script>
 </head>
 
 <body>
     <header>
         <div class="menu-icon">
-            <i class="fas fa-bars"></i>
-            <h1 class="page-title"><?php echo $pageTitle; ?></h1>
+            <!-- <i class="fas fa-bars"></i> -->
+            <span>
+                <?php echo isset($pageTitle) ? htmlspecialchars($pageTitle) : 'Dashboard'; ?>
+            </span>
         </div>
         <div class="header-right">
+            <!-- Notifications -->
+            <?php
+            // Get initial unread notification count
+            $unread_query = "SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = 0";
+            $stmt = $conn->prepare($unread_query);
+            $stmt->bind_param("i", $userId);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $initial_unread_count = (int) $result->fetch_assoc()['count'];
+            $stmt->close();
+            ?>
+            <div class="notifications-btn" onclick="toggleNotifications()">
+                <i class="fas fa-bell"></i>
+                <span class="notification-count" id="notificationCount">
+                    <?php echo $initial_unread_count; ?>
+                </span>
+                <div class="notifications-dropdown" id="notificationsDropdown">
+                    <div class="notifications-header">
+                        <h3>Notifications</h3>
+                        <button id="closeNotifications"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="notifications-list" id="notificationsList">
+                        <!-- Notifications will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
             <div class="profile" onclick="toggleProfileDropdown()">
                 <div class="profile-icon">
                     <i class="fas fa-user"></i>
                 </div>
                 <div class="profile-info">
-                    <strong><?php echo htmlspecialchars($userName); ?></strong>
-                    <small><?php echo ucfirst($userRole); ?></small>
+                    <strong>
+                        <?php echo htmlspecialchars($userName); ?>
+                    </strong>
+                    <small>
+                        <?php echo ucfirst($userRole); ?>
+                    </small>
                 </div>
                 <div class="profile-dropdown" id="profileDropdown">
                     <a href="profile.php" class="dropdown-item">
@@ -663,7 +933,9 @@ if (isset($_SESSION['role']) && $_SESSION['role'] === 'Customer') {
                 <button class="cart-btn" onclick="toggleCart()">
                     <i class="fas fa-shopping-cart cart-icon"></i>
                     <?php if ($cartCount > 0): ?>
-                        <span class="cart-count"><?php echo $cartCount; ?></span>
+                        <span class="cart-count">
+                            <?php echo $cartCount; ?>
+                        </span>
                     <?php endif; ?>
                 </button>
                 <!-- Add Cart Dropdown Structure -->
@@ -698,108 +970,6 @@ if (isset($_SESSION['role']) && $_SESSION['role'] === 'Customer') {
     </div>
 
     <?php if (isset($needs_preferences) && $needs_preferences): ?>
-        <style>
-            body {
-                overflow: hidden !important;
-            }
-
-            #preferenceModal {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100vw;
-                height: 100vh;
-                background: rgba(30, 41, 59, 0.25);
-                z-index: 9999;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                backdrop-filter: blur(7px);
-            }
-
-            #preferenceModal .modal-content {
-                background: #fff;
-                padding: 2.5rem 2.5rem 2rem 2.5rem;
-                border-radius: 18px;
-                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
-                min-width: 350px;
-                max-width: 95vw;
-                width: 100%;
-                max-width: 420px;
-                display: flex;
-                flex-direction: column;
-                align-items: stretch;
-                animation: modalPopIn 0.3s cubic-bezier(.4, 2, .6, 1);
-            }
-
-            @keyframes modalPopIn {
-                from {
-                    transform: scale(0.95) translateY(30px);
-                    opacity: 0;
-                }
-
-                to {
-                    transform: scale(1) translateY(0);
-                    opacity: 1;
-                }
-            }
-
-            #preferenceModal h2 {
-                margin-bottom: 1.2rem;
-                font-size: 1.5rem;
-                color: #2563eb;
-                text-align: center;
-                font-weight: 700;
-                letter-spacing: 0.5px;
-            }
-
-            #preferenceModal label {
-                font-weight: 600;
-                margin-top: 1.1rem;
-                margin-bottom: 0.4rem;
-                color: #334155;
-                font-size: 1rem;
-            }
-
-            #preferenceModal select {
-                width: 100%;
-                padding: 10px 12px;
-                border: 1.5px solid #cbd5e1;
-                border-radius: 7px;
-                font-size: 1rem;
-                background: #f8fafc;
-                transition: border-color 0.2s;
-                margin-bottom: 0.2rem;
-            }
-
-            #preferenceModal select:focus {
-                border-color: #2563eb;
-                outline: none;
-                background: #fff;
-            }
-
-            #preferenceModal button[type='submit'] {
-                margin-top: 2rem;
-                width: 100%;
-                background: linear-gradient(90deg, #2563eb 0%, #60a5fa 100%);
-                color: #fff;
-                border: none;
-                border-radius: 8px;
-                padding: 13px 0;
-                font-size: 1.1rem;
-                font-weight: 600;
-                cursor: pointer;
-                box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
-                transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
-                letter-spacing: 0.5px;
-            }
-
-            #preferenceModal button[type='submit']:hover {
-                background: linear-gradient(90deg, #1d4ed8 0%, #3b82f6 100%);
-                box-shadow: 0 4px 16px rgba(37, 99, 235, 0.13);
-                transform: translateY(-2px) scale(1.01);
-            }
-        </style>
         <div id="preferenceModal">
             <form method="post" class="modal-content" autocomplete="off">
                 <h2>Set Your Preferences</h2>
@@ -814,14 +984,18 @@ if (isset($_SESSION['role']) && $_SESSION['role'] === 'Customer') {
                 <select name="preferred_category" id="preferred_category" required>
                     <option value="">Select</option>
                     <?php foreach (isset($categories) ? $categories : [] as $cat): ?>
-                        <option value="<?= htmlspecialchars($cat['c_Name']) ?>"><?= htmlspecialchars($cat['c_Name']) ?></option>
+                        <option value="<?= htmlspecialchars($cat['c_Name']) ?>">
+                            <?= htmlspecialchars($cat['c_Name']) ?>
+                        </option>
                     <?php endforeach; ?>
                 </select>
                 <label for="preferred_media_type">Preferred Media Type</label>
                 <select name="preferred_media_type" id="preferred_media_type" required>
                     <option value="">Select</option>
                     <?php foreach (isset($media_types) ? $media_types : [] as $mt): ?>
-                        <option value="<?= htmlspecialchars($mt['name']) ?>"><?= htmlspecialchars($mt['name']) ?></option>
+                        <option value="<?= htmlspecialchars($mt['name']) ?>">
+                            <?= htmlspecialchars($mt['name']) ?>
+                        </option>
                     <?php endforeach; ?>
                 </select>
                 <button type="submit" name="save_preferences" class="btn btn-primary">Save Preferences</button>
@@ -888,7 +1062,7 @@ if (isset($_SESSION['role']) && $_SESSION['role'] === 'Customer') {
                         total += itemTotal;
                         html += `
                             <div class="cart-item" data-cart-id="${item.id}">
-                                <input type="checkbox" class="cart-select-checkbox" value="${item.id}" checked>
+                                <input type="checkbox" class="cart-select-checkbox" value="${item.id}" checked onchange="updateCartTotal()">
                                 <img src="${item.image}" 
                                      alt="${item.name}" 
                                      onclick="showCartImageModal(this.src, this.alt)"
@@ -911,15 +1085,7 @@ if (isset($_SESSION['role']) && $_SESSION['role'] === 'Customer') {
 
                     cartItemsContainer.innerHTML = html;
                     document.querySelector('.cart-footer').style.display = 'block';
-                    document.querySelector('.cart-footer').innerHTML = `
-                        <div class="cart-total">
-                            <span>Total:</span>
-                            <span>Rs ${total.toFixed(2)}</span>
-                        </div>
-                        <button type="button" class="checkout-btn" onclick="checkoutSelectedItems()">
-                            <i class="fas fa-shopping-cart"></i>
-                            Checkout Selected Items
-                        </button>`;
+                    updateCartTotal();
                 })
                 .catch(error => {
                     console.error('Error loading cart:', error);
@@ -930,31 +1096,32 @@ if (isset($_SESSION['role']) && $_SESSION['role'] === 'Customer') {
         }
 
         // Change Cart Quantity
-        function changeCartQty(cartId, delta) {
-            const item = document.querySelector(`[data-cart-id='${cartId}'] .cart-qty-value`);
-            if (!item) return;
+        function changeCartQty(itemId, change) {
+            const qtyElement = document.querySelector(`.cart-item[data-cart-id="${itemId}"] .cart-qty-value`);
+            let newQty = parseInt(qtyElement.textContent) + change;
+            if (newQty < 1) newQty = 1;
 
-            let qty = parseInt(item.textContent) + delta;
-            if (qty < 1) qty = 1;
-
-            fetch('/printing_press/pages/update_cart.php', {
+            fetch('/printing_press/pages/update_cart_quantity.php', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `id=${cartId}&action=update&quantity=${qty}`
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `item_id=${itemId}&quantity=${newQty}`
             })
                 .then(res => res.json())
                 .then(data => {
                     if (data.success) {
-                        showCartToast(data.message);
-                        loadCartItems();
+                        qtyElement.textContent = newQty;
+                        updateCartTotal();
                         updateCartBadge();
+                        showCartToast('Cart updated successfully');
                     } else {
-                        showCartToast(data.message || 'Error updating quantity', 'error');
+                        showCartToast('Error updating cart', 'error');
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    showCartToast('Error updating quantity', 'error');
+                    showCartToast('Error updating cart', 'error');
                 });
         }
 
@@ -1059,6 +1226,233 @@ if (isset($_SESSION['role']) && $_SESSION['role'] === 'Customer') {
                 dropdown.classList.remove('active');
             }
         });
+
+        // Notifications functionality
+        function toggleNotifications() {
+            const dropdown = document.getElementById('notificationsDropdown');
+            dropdown.classList.toggle('active');
+            if (dropdown.classList.contains('active')) {
+                loadNotifications(true);
+            }
+        }
+
+        // Set initial display of notification count
+        document.addEventListener('DOMContentLoaded', () => {
+            const countElement = document.getElementById('notificationCount');
+            const count = <?php echo $initial_unread_count; ?>;
+            if (countElement) {
+                countElement.style.display = count > 0 ? 'flex' : 'none';
+            }
+
+            // Initial load of notifications
+            loadNotifications(true);
+
+            // Set up periodic refresh
+            setInterval(() => loadNotifications(false), 30000);
+
+            // Set up click handlers
+            setupNotificationClickHandlers();
+        });
+
+        // Update notification count
+        function updateNotificationCount(count) {
+            const countElement = document.getElementById('notificationCount');
+            if (countElement) {
+                count = parseInt(count) || 0;
+                countElement.textContent = count;
+                countElement.style.display = count > 0 ? 'flex' : 'none';
+            }
+        }
+
+        // Load notifications with cache prevention
+        function loadNotifications(forceUpdate = false) {
+            const timestamp = new Date().getTime();
+            fetch(`/printing_press/pages/get_notifications.php?t=${timestamp}`, {
+                headers: {
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache'
+                }
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        updateNotificationCount(data.unread_count);
+
+                        const dropdown = document.getElementById('notificationsDropdown');
+                        if (dropdown.classList.contains('active') || forceUpdate) {
+                            renderNotifications(data.notifications);
+                        }
+                    } else {
+                        console.error('Error loading notifications:', data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading notifications:', error);
+                });
+        }
+
+        // Render notifications
+        function renderNotifications(notifications) {
+            const container = document.getElementById('notificationsList');
+            if (!notifications || !notifications.length) {
+                container.innerHTML = '<div class="empty-notifications">No notifications</div>';
+                return;
+            }
+
+            container.innerHTML = notifications.map(notification => `
+                <div class="notification-item ${notification.is_read ? '' : 'unread'}" 
+                     onclick="handleNotificationClick(${notification.id}, '${notification.reference_type}', ${notification.reference_id})">
+                    <div class="notification-content">
+                        <div class="notification-title">${notification.title}</div>
+                        <div class="notification-message">${notification.message}</div>
+                    </div>
+                    <div class="notification-time">${formatDate(notification.created_at)}</div>
+                </div>
+            `).join('');
+        }
+
+        // Handle notification click with role-based redirection
+        function handleNotificationClick(notificationId, referenceType, referenceId) {
+            if (!notificationId) {
+                console.error('Invalid notification ID');
+                return;
+            }
+
+            fetch('/printing_press/pages/mark_notification_read.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `notification_id=${notificationId}`
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        // Force update notifications
+                        loadNotifications(true);
+
+                        // Get user role from PHP session
+                        const userRole = '<?php echo $_SESSION["role"]; ?>';
+
+                        // Handle navigation based on role and reference type
+                        if (referenceType && referenceId) {
+                            switch (referenceType) {
+                                case 'custom_template':
+                                    if (userRole === 'Customer') {
+                                        window.location.href = `/printing_press/pages/custom_template.php?id=${referenceId}`;
+                                    } else {
+                                        // For Staff and Admin
+                                        window.location.href = `/printing_press/pages/manage_custom_requests.php?id=${referenceId}`;
+                                    }
+                                    break;
+
+                                case 'template_finishing':
+                                    // Same page for both staff and customer
+                                    window.location.href = `/printing_press/pages/template_finishing.php?id=${referenceId}`;
+                                    break;
+
+                                case 'order':
+                                    if (userRole === 'Customer') {
+                                        window.location.href = `/printing_press/pages/your_orders.php?highlight=${referenceId}`;
+                                    } else if (userRole === 'Admin') {
+                                        window.location.href = `/printing_press/pages/orders.php?highlight=${referenceId}`;
+                                    }
+                                    break;
+
+                                default:
+                                    console.log('Unknown reference type:', referenceType);
+                            }
+                        }
+                    } else {
+                        console.error('Error marking notification as read:', data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error marking notification as read:', error);
+                });
+        }
+
+        // Format date for notifications
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diff = now - date;
+            const seconds = Math.floor(diff / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const hours = Math.floor(minutes / 60);
+            const days = Math.floor(hours / 24);
+
+            if (days > 7) {
+                return date.toLocaleDateString();
+            } else if (days > 0) {
+                return `${days} day${days > 1 ? 's' : ''} ago`;
+            } else if (hours > 0) {
+                return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+            } else if (minutes > 0) {
+                return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+            } else {
+                return 'Just now';
+            }
+        }
+
+        function setupNotificationClickHandlers() {
+            // Close notifications when clicking outside
+            document.addEventListener('click', (e) => {
+                const dropdown = document.getElementById('notificationsDropdown');
+                const btn = document.querySelector('.notifications-btn');
+                const closeBtn = document.getElementById('closeNotifications');
+
+                if (!dropdown || !btn) return;
+
+                // If clicking the close button, close the dropdown
+                if (closeBtn && (e.target === closeBtn || closeBtn.contains(e.target))) {
+                    dropdown.classList.remove('active');
+                    e.stopPropagation();
+                    return;
+                }
+
+                // If clicking outside the dropdown and not on the notifications button
+                if (!dropdown.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
+                    dropdown.classList.remove('active');
+                }
+            });
+
+            // Handle close button click
+            const closeBtn = document.getElementById('closeNotifications');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', (e) => {
+                    const dropdown = document.getElementById('notificationsDropdown');
+                    dropdown.classList.remove('active');
+                    e.stopPropagation();
+                });
+            }
+        }
+
+        // Add new function to update cart total based on selected items
+        function updateCartTotal() {
+            const cartItems = document.querySelectorAll('.cart-item');
+            let total = 0;
+
+            cartItems.forEach(item => {
+                const checkbox = item.querySelector('.cart-select-checkbox');
+                if (checkbox.checked) {
+                    const price = parseFloat(item.querySelector('.cart-item-price').textContent.replace('Rs ', ''));
+                    const quantity = parseInt(item.querySelector('.cart-qty-value').textContent);
+                    total += price * quantity;
+                }
+            });
+
+            const cartFooter = document.querySelector('.cart-footer');
+            cartFooter.innerHTML = `
+                <div class="cart-total">
+                    <span>Total:</span>
+                    <span>Rs ${total.toFixed(2)}</span>
+                </div>
+                <button type="button" class="checkout-btn" onclick="checkoutSelectedItems()">
+                    <i class="fas fa-shopping-cart"></i>
+                    Checkout Selected Items
+                </button>`;
+        }
     </script>
 </body>
 

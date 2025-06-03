@@ -36,27 +36,34 @@ body {
 }
 
 .sidebar .menu li {
-    padding: 10px 15px;
+    padding: 6px 12px;
+    margin-bottom: 5px;
     cursor: pointer;
     transition: background 0.3s ease;
+    font-size: 15px;
 }
 
 .sidebar .menu li a {
     text-decoration: none;
-    color: inherit; 
+    color: inherit;
+    font-size: inherit;
+    display: block;
 }
 
 .sidebar .menu li:hover {
     background-color: #fff;
     border-radius: 5px;
     color: black;
+    font-size: 15px;
 }
 
-.sidebar .menu li:active {
+.sidebar .menu li:active,
+.sidebar .menu li.active {
     background-color: #fff;
     border-radius: 5px;
     color: black;
     text-decoration: underline;
+    font-size: 15px;
 }
 
 /* Main Content */

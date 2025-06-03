@@ -1,0 +1,114 @@
+[2025-05-27 19:47:41] Generating eSewa signature
+Data: Array
+(
+    [total_amount] => 199.00
+    [transaction_uuid] => 250527-194741
+    [product_code] => EPAYTEST
+    [secret_key] => 8gBm/:&EnhH.1/q
+)
+
+--------------------------------------------------------------------------------
+[2025-05-27 19:47:41] String to sign
+Data: 199.00,250527-194741,EPAYTEST
+--------------------------------------------------------------------------------
+[2025-05-27 19:47:41] Generated signature
+Data: Array
+(
+    [raw_signature] => 86a4805a29b3ad046d2413b45b3070459c3dde4712d00d0165197a21a88551cd
+    [base64_signature] => hqSAWimzrQRtJBO0WzBwRZw93kcS0A0BZRl6IaiFUc0=
+)
+
+--------------------------------------------------------------------------------
+[2025-05-27 19:47:41] eSewa form data to be submitted
+Data: Array
+(
+    [amount] => 199.00
+    [tax_amount] => 0.00
+    [total_amount] => 199.00
+    [transaction_uuid] => 250527-194741
+    [product_code] => EPAYTEST
+    [product_service_charge] => 0.00
+    [product_delivery_charge] => 0.00
+    [success_url] => http://localhost/Printing_press/pages/esewa_success.php
+    [failure_url] => http://localhost/Printing_press/pages/esewa_failure.php
+    [signed_field_names] => total_amount,transaction_uuid,product_code
+    [signature] => hqSAWimzrQRtJBO0WzBwRZw93kcS0A0BZRl6IaiFUc0=
+)
+
+--------------------------------------------------------------------------------
+[2025-05-27 19:47:41] Generating eSewa signature
+Data: Array
+(
+    [total_amount] => 199.00
+    [transaction_uuid] => 250527-194741
+    [product_code] => EPAYTEST
+    [secret_key] => 8gBm/:&EnhH.1/q
+)
+
+--------------------------------------------------------------------------------
+[2025-05-27 19:47:41] String to sign
+Data: 199.00,250527-194741,EPAYTEST
+--------------------------------------------------------------------------------
+[2025-05-27 19:47:41] Generated signature
+Data: Array
+(
+    [raw_signature] => 86a4805a29b3ad046d2413b45b3070459c3dde4712d00d0165197a21a88551cd
+    [base64_signature] => hqSAWimzrQRtJBO0WzBwRZw93kcS0A0BZRl6IaiFUc0=
+)
+
+--------------------------------------------------------------------------------
+[2025-05-27 19:47:41] eSewa form data to be submitted
+Data: Array
+(
+    [amount] => 199.00
+    [tax_amount] => 0.00
+    [total_amount] => 199.00
+    [transaction_uuid] => 250527-194741
+    [product_code] => EPAYTEST
+    [product_service_charge] => 0.00
+    [product_delivery_charge] => 0.00
+    [success_url] => http://localhost/Printing_press/pages/esewa_success.php
+    [failure_url] => http://localhost/Printing_press/pages/esewa_failure.php
+    [signed_field_names] => total_amount,transaction_uuid,product_code
+    [signature] => hqSAWimzrQRtJBO0WzBwRZw93kcS0A0BZRl6IaiFUc0=
+)
+
+--------------------------------------------------------------------------------
+[2025-05-27 19:47:41] Generating eSewa signature
+Data: Array
+(
+    [total_amount] => 199.00
+    [transaction_uuid] => 250527-194741
+    [product_code] => EPAYTEST
+    [secret_key] => 8gBm/:&EnhH.1/q
+)
+
+--------------------------------------------------------------------------------
+[2025-05-27 19:47:41] String to sign
+Data: 199.00,250527-194741,EPAYTEST
+--------------------------------------------------------------------------------
+[2025-05-27 19:47:41] Generated signature
+Data: Array
+(
+    [raw_signature] => 86a4805a29b3ad046d2413b45b3070459c3dde4712d00d0165197a21a88551cd
+    [base64_signature] => hqSAWimzrQRtJBO0WzBwRZw93kcS0A0BZRl6IaiFUc0=
+)
+
+--------------------------------------------------------------------------------
+[2025-05-27 19:47:41] eSewa form data to be submitted
+Data: Array
+(
+    [amount] => 199.00
+    [tax_amount] => 0.00
+    [total_amount] => 199.00
+    [transaction_uuid] => 250527-194741
+    [product_code] => EPAYTEST
+    [product_service_charge] => 0.00
+    [product_delivery_charge] => 0.00
+    [success_url] => http://localhost/Printing_press/pages/esewa_success.php
+    [failure_url] => http://localhost/Printing_press/pages/esewa_failure.php
+    [signed_field_names] => total_amount,transaction_uuid,product_code
+    [signature] => hqSAWimzrQRtJBO0WzBwRZw93kcS0A0BZRl6IaiFUc0=
+)
+
+--------------------------------------------------------------------------------

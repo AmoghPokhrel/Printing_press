@@ -19,10 +19,10 @@ function show_subscription_popup($message)
                         <i class="fas fa-pencil-alt"></i>
                         <span>Unlimited Template Modifications</span>
                     </div>
-                    <div class="benefit-item">
+                    <!-- <div class="benefit-item">
                         <i class="fas fa-clock"></i>
                         <span>Priority Processing</span>
-                    </div>
+                    </div> -->
                 </div>
                 <a href="subscription.php" class="subscribe-now-btn">Subscribe Now</a>
                 <button class="close-popup" onclick="closeSubscriptionPopup()">
@@ -44,7 +44,7 @@ function show_subscription_popup($message)
             display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 1000;
+            z-index: 9999;
             animation: fadeIn 0.3s ease-out;
         }
 
