@@ -28,8 +28,8 @@ if (isset($_SESSION['username'])) {
                 $mail->isSMTP();
                 $mail->Host = "smtp.gmail.com"; 
                 $mail->SMTPAuth = true;
-                $mail->Username = 'amogh0012@gmail.com'; 
-                $mail->Password = 'ntyr alnh sono dhin'; 
+                $mail->Username = ''; 
+                $mail->Password = ''; 
                 $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
                 $mail->Port = 587;
 
